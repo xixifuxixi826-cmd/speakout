@@ -139,6 +139,14 @@ function renderPromptSummary(prompts) {
   });
 }
 
+function renderRuntimeConfig(config) {
+  qs("#runtime-api-url").value = config.modelApiUrl || "";
+  qs("#runtime-api-key").value = config.modelApiKey || "";
+  qs("#runtime-model-name").value = config.modelApiModel || "gpt-4o";
+  qs("#runtime-provider-code").value = config.modelProviderCode || "yunwu";
+  qs("#runtime-require-real-ai").checked = Boolean(config.requireRealAi);
+}
+
 function renderJobs(jobs) {
   qs("#jobs-table").innerHTML = jobs
     .map(
@@ -198,15 +206,41 @@ async function savePromptConfig() {
   qs("#test-result").textContent = "Prompt 已保存为新版本，可以直接点“试跑一次”验证。";
 }
 
+async function saveRuntimeConfig() {
+  const result = await getJson("/admin-api/config/runtime/update", {
+    method: "POST",
+    body: JSON.stringify({
+      modelApiUrl: qs("#runtime-api-url").value.trim(),
+      modelApiKey: qs("#runtime-api-key").value.trim(),
+      modelApiModel: qs("#runtime-model-name").value.trim(),
+      modelProviderCode: qs("#runtime-provider-code").value.trim(),
+      requireRealAi: qs("#runtime-require-real-ai").checked
+    })
+  });
+  renderRuntimeConfig(result);
+  qs("#runtime-save-result").textContent = JSON.stringify(
+    {
+      modelApiUrl: result.modelApiUrl,
+      modelApiModel: result.modelApiModel,
+      modelProviderCode: result.modelProviderCode,
+      requireRealAi: result.requireRealAi,
+      savedAt: new Date().toLocaleString()
+    },
+    null,
+    2
+  );
+}
+
 async function bootstrap() {
   try {
-    const [overview, users, orders, words, prompts, jobs] = await Promise.all([
+    const [overview, users, orders, words, prompts, jobs, runtimeConfig] = await Promise.all([
       getJson("/admin-api/dashboard/overview"),
       getJson("/admin-api/users"),
       getJson("/admin-api/orders"),
       getJson("/admin-api/content/words"),
       getJson("/admin-api/config/ai-prompts"),
-      getJson("/admin-api/ai-feedback/jobs")
+      getJson("/admin-api/ai-feedback/jobs"),
+      getJson("/admin-api/config/runtime")
     ]);
 
     renderOverview(overview);
@@ -215,6 +249,7 @@ async function bootstrap() {
     renderWords(words);
     renderPromptSummary(prompts);
     renderJobs(jobs);
+    renderRuntimeConfig(runtimeConfig);
   } catch (error) {
     console.error(error);
     document.body.insertAdjacentHTML(
@@ -237,6 +272,12 @@ qs("#run-prompt-test").addEventListener("click", () => {
 qs("#save-prompt-config").addEventListener("click", () => {
   savePromptConfig().catch((error) => {
     qs("#test-result").textContent = `保存失败：${error.message}`;
+  });
+});
+
+qs("#save-runtime-config").addEventListener("click", () => {
+  saveRuntimeConfig().catch((error) => {
+    qs("#runtime-save-result").textContent = `保存失败：${error.message}`;
   });
 });
 

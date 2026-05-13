@@ -121,6 +121,48 @@
 
             <div class="prompt-layout">
               <article class="prompt-card" id="prompt-summary"></article>
+              <article class="prompt-card">
+                <div class="prompt-card__head">
+                  <div>
+                    <p class="prompt-card__eyebrow">模型运行配置</p>
+                    <h3>Provider / Key / 模型</h3>
+                  </div>
+                  <span class="tag">可直接生效</span>
+                </div>
+
+                <div class="prompt-editor-grid">
+                  <div class="prompt-field prompt-field--full">
+                    <label>模型接口地址</label>
+                    <input class="real-input" id="runtime-api-url" placeholder="https://yunwu.ai/v1/chat/completions" />
+                  </div>
+                  <div class="prompt-field">
+                    <label>Provider Code</label>
+                    <input class="real-input" id="runtime-provider-code" placeholder="yunwu" />
+                  </div>
+                  <div class="prompt-field">
+                    <label>模型名</label>
+                    <input class="real-input" id="runtime-model-name" placeholder="gpt-4o" />
+                  </div>
+                  <div class="prompt-field prompt-field--full">
+                    <label>API Key</label>
+                    <input class="real-input" id="runtime-api-key" type="password" placeholder="sk-..." />
+                  </div>
+                  <div class="prompt-field prompt-field--full">
+                    <label class="toggle-line">
+                      <input id="runtime-require-real-ai" type="checkbox" />
+                      <span>强制走真实 AI，不再回退本地评分器</span>
+                    </label>
+                  </div>
+                  <div class="prompt-field prompt-field--full">
+                    <label>保存结果</label>
+                    <pre class="fake-textarea fake-textarea--code" id="runtime-save-result">配置改完后点击“保存模型配置”。</pre>
+                  </div>
+                </div>
+
+                <div class="prompt-actions">
+                  <button class="primary-button" id="save-runtime-config">保存模型配置</button>
+                </div>
+              </article>
               <article class="prompt-card prompt-card--editor">
                 <div class="prompt-card__head">
                   <div>

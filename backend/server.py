@@ -92,17 +92,55 @@ def json_loads(value, default=None):
     return json.loads(value)
 
 
-def load_runtime_config():
+def read_runtime_config_file():
     config = {}
     if CONFIG_PATH.exists():
-        config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+        try:
+            config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            config = {}
+    return config
+
+
+def read_runtime_config_from_db():
+    if not DB_PATH.exists():
+        return {}
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            "SELECT config_key, config_value FROM app_config WHERE config_key LIKE 'runtime.%'"
+        ).fetchall()
+        conn.close()
+    except sqlite3.Error:
+        return {}
+
+    config = {}
+    for row in rows:
+        key = row["config_key"].replace("runtime.", "", 1)
+        raw = row["config_value"]
+        if key == "require_real_ai":
+            config[key] = str(raw).lower() in ("1", "true", "yes")
+        else:
+            config[key] = raw
+    return config
+
+
+def load_runtime_config():
+    file_config = read_runtime_config_file()
+    db_config = read_runtime_config_from_db()
 
     return {
-        "model_api_url": os.getenv("MODEL_API_URL", config.get("model_api_url", "")),
-        "model_api_key": os.getenv("MODEL_API_KEY", config.get("model_api_key", "")),
-        "model_api_model": os.getenv("MODEL_API_MODEL", config.get("model_api_model", "gpt-4o")),
-        "model_provider_code": os.getenv("MODEL_PROVIDER_CODE", config.get("model_provider_code", "yunwu")),
-        "require_real_ai": str(os.getenv("REQUIRE_REAL_AI", config.get("require_real_ai", False))).lower() in ("1", "true", "yes"),
+        "model_api_url": os.getenv("MODEL_API_URL", db_config.get("model_api_url", file_config.get("model_api_url", ""))),
+        "model_api_key": os.getenv("MODEL_API_KEY", db_config.get("model_api_key", file_config.get("model_api_key", ""))),
+        "model_api_model": os.getenv("MODEL_API_MODEL", db_config.get("model_api_model", file_config.get("model_api_model", "gpt-4o"))),
+        "model_provider_code": os.getenv(
+            "MODEL_PROVIDER_CODE",
+            db_config.get("model_provider_code", file_config.get("model_provider_code", "yunwu")),
+        ),
+        "require_real_ai": str(
+            os.getenv("REQUIRE_REAL_AI", db_config.get("require_real_ai", file_config.get("require_real_ai", False)))
+        ).lower() in ("1", "true", "yes"),
     }
 
 
@@ -230,6 +268,12 @@ def init_db():
           output_json TEXT,
           created_at TEXT NOT NULL
         );
+
+        CREATE TABLE IF NOT EXISTS app_config (
+          config_key TEXT PRIMARY KEY,
+          config_value TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        );
         """
     )
 
@@ -324,6 +368,29 @@ def init_db():
                 ("GAOSHOU-2026-VIP", "高手会员"),
                 ("XIAOHONGSHU-TRIAL", "高手会员"),
                 ("BIAODA-GROWTH", "高手会员"),
+            ],
+        )
+
+    file_runtime_config = read_runtime_config_file()
+    if cur.execute("SELECT COUNT(*) FROM app_config").fetchone()[0] == 0:
+        initial_runtime_config = {
+            "model_api_url": file_runtime_config.get("model_api_url", ""),
+            "model_api_key": file_runtime_config.get("model_api_key", ""),
+            "model_api_model": file_runtime_config.get("model_api_model", "gpt-4o"),
+            "model_provider_code": file_runtime_config.get("model_provider_code", "yunwu"),
+            "require_real_ai": file_runtime_config.get("require_real_ai", False),
+        }
+        cur.executemany(
+            """
+            INSERT OR REPLACE INTO app_config (config_key, config_value, updated_at)
+            VALUES (?, ?, ?)
+            """,
+            [
+                ("runtime.model_api_url", initial_runtime_config["model_api_url"], now_text()),
+                ("runtime.model_api_key", initial_runtime_config["model_api_key"], now_text()),
+                ("runtime.model_api_model", initial_runtime_config["model_api_model"], now_text()),
+                ("runtime.model_provider_code", initial_runtime_config["model_provider_code"], now_text()),
+                ("runtime.require_real_ai", "true" if initial_runtime_config["require_real_ai"] else "false", now_text()),
             ],
         )
 
@@ -1094,6 +1161,56 @@ def admin_prompts(conn):
     ]
 
 
+def admin_runtime_config():
+    runtime_config = load_runtime_config()
+    return {
+        "modelApiUrl": runtime_config["model_api_url"],
+        "modelApiKey": runtime_config["model_api_key"],
+        "modelApiModel": runtime_config["model_api_model"],
+        "modelProviderCode": runtime_config["model_provider_code"],
+        "requireRealAi": runtime_config["require_real_ai"],
+    }
+
+
+def update_runtime_config(conn, body):
+    model_api_url = (body.get("modelApiUrl") or "").strip()
+    model_api_key = (body.get("modelApiKey") or "").strip()
+    model_api_model = (body.get("modelApiModel") or "").strip() or "gpt-4o"
+    model_provider_code = (body.get("modelProviderCode") or "").strip() or "yunwu"
+    require_real_ai = bool(body.get("requireRealAi"))
+
+    if require_real_ai and (not model_api_url or not model_api_key):
+        raise ValueError("开启真实 AI 前，请先填写模型地址和 API Key")
+
+    updates = [
+        ("runtime.model_api_url", model_api_url, now_text()),
+        ("runtime.model_api_key", model_api_key, now_text()),
+        ("runtime.model_api_model", model_api_model, now_text()),
+        ("runtime.model_provider_code", model_provider_code, now_text()),
+        ("runtime.require_real_ai", "true" if require_real_ai else "false", now_text()),
+    ]
+    conn.executemany(
+        """
+        INSERT INTO app_config (config_key, config_value, updated_at)
+        VALUES (?, ?, ?)
+        ON CONFLICT(config_key) DO UPDATE SET
+          config_value = excluded.config_value,
+          updated_at = excluded.updated_at
+        """,
+        updates,
+    )
+    conn.execute(
+        """
+        UPDATE ai_prompts
+        SET model_name = ?, provider_code = ?, updated_at = ?
+        WHERE prompt_key = 'card_association_feedback'
+        """,
+        (model_api_model, model_provider_code, now_text()),
+    )
+    conn.commit()
+    return admin_runtime_config()
+
+
 def update_prompt(conn, prompt_key, system_prompt, user_prompt_template, model_name=None, provider_code=None):
     prompt_key = (prompt_key or "").strip()
     if not prompt_key:
@@ -1289,6 +1406,8 @@ class AppHandler(BaseHTTPRequestHandler):
                 self.ok(admin_words(conn))
             elif path == "/admin-api/config/ai-prompts":
                 self.ok(admin_prompts(conn))
+            elif path == "/admin-api/config/runtime":
+                self.ok(admin_runtime_config())
             elif path == "/admin-api/ai-feedback/jobs":
                 self.ok(admin_jobs(conn))
             elif path == "/admin-api/redeem-codes":
@@ -1348,6 +1467,8 @@ class AppHandler(BaseHTTPRequestHandler):
                         body.get("providerCode"),
                     )
                 )
+            elif path == "/admin-api/config/runtime/update":
+                self.ok(update_runtime_config(conn, body))
             else:
                 self.fail("接口不存在", 404)
         except ValueError as error:
