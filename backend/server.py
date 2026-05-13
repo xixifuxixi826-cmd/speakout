@@ -17,8 +17,8 @@ ROOT = Path(__file__).resolve().parent
 DATA_DIR = ROOT / "data"
 DB_PATH = DATA_DIR / "express_master.db"
 CONFIG_PATH = ROOT / "runtime_config.json"
-HOST = "0.0.0.0"
-PORT = 8765
+HOST = os.getenv("HOST", "0.0.0.0")
+PORT = int(os.getenv("PORT", "8765"))
 
 WORD_DECKS = [
     {
