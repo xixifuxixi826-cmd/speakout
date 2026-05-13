@@ -1,0 +1,17 @@
+.home-hero {
+  padding: 32rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 28rpx;
+  position: relative;
+  overflow: hidden;
+}
+
+.home-rule-card {
+  padding: 24rpx;
+}
+
+.home-section {
+  margin-top: 24rpx;
+  padding: 28rpx;
+}

@@ -1,0 +1,22 @@
+.feedback-score-card,
+.feedback-detail-card,
+.feedback-upsell {
+  padding: 28rpx;
+}
+
+.feedback-score {
+  font-size: 72rpx;
+  font-weight: 700;
+}
+
+.feedback-line {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+
+.feedback-upsell {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}

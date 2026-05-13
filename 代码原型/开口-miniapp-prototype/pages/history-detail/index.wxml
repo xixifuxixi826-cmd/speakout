@@ -1,0 +1,40 @@
+<view class="screen" wx:if="{{record}}">
+  <view class="stack">
+    <view class="stack-tight">
+      <text class="eyebrow">{{record.timeLabel}}</text>
+      <text class="page-title">{{record.title}}</text>
+    </view>
+
+    <view class="chip-row">
+      <view wx:for="{{record.pair}}" wx:key="*this" class="pill-chip pill-chip--selected">
+        <text>{{item}}</text>
+      </view>
+    </view>
+
+    <view class="feedback-card feedback-detail-card">
+      <view class="row-between">
+        <text class="section-title">本次表达摘录</text>
+        <text class="mono">{{record.score}}</text>
+      </view>
+      <text class="section-copy">{{record.excerpt}}</text>
+    </view>
+
+    <view class="feedback-card feedback-detail-card">
+      <text class="section-title">评分拆解</text>
+      <view class="stack-tight">
+        <view wx:for="{{record.details}}" wx:key="label" class="feedback-line">
+          <view class="row-between">
+            <text>{{item.label}}</text>
+            <text class="mono">{{item.score}}</text>
+          </view>
+          <text class="section-copy">{{item.note}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="feedback-card feedback-detail-card">
+      <text class="section-title">改进建议</text>
+      <text wx:for="{{record.suggestions}}" wx:key="*this" class="section-copy">- {{item}}</text>
+    </view>
+  </view>
+</view>

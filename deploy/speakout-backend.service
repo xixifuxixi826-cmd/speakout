@@ -1,0 +1,15 @@
+[Unit]
+Description=Speak Out Backend
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/srv/speakout/backend
+ExecStart=/usr/bin/python3 /srv/speakout/backend/server.py
+Restart=always
+RestartSec=3
+User=www-data
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,9 @@
+.membership-hero,
+.membership-plan,
+.membership-note {
+  padding: 28rpx;
+}
+
+.membership-price {
+  font-size: 68rpx;
+}

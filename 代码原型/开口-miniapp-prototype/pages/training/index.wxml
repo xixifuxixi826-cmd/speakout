@@ -1,0 +1,53 @@
+<view class="screen" wx:if="{{state}}">
+  <view class="row-between top-row">
+    <view class="stack-tight">
+      <text class="eyebrow">第 {{state.roundNo}} 轮</text>
+      <text class="page-title">16 张情绪形容词卡</text>
+    </view>
+    <view class="status-chip">
+      <text>剩余 {{state.remainingQuota < 0 ? '无限次' : state.remainingQuota}}</text>
+    </view>
+  </view>
+
+  <view class="tip-card training-rule">
+    <text class="section-copy">先选两个词，试着用“A 是 B”或“A 是一种 B”立一句观点。</text>
+  </view>
+
+  <view class="chip-row training-chip-row training-chip-row--center">
+    <view
+      wx:for="{{state.selectedCards}}"
+      wx:key="id"
+      class="pill-chip pill-chip--selected training-selected-chip"
+    >
+      <text>{{item.word}}</text>
+    </view>
+    <view wx:if="{{!state.selectedCards.length}}" class="pill-chip">
+      <text>先翻开并选中两张形容词卡</text>
+    </view>
+  </view>
+
+  <view class="matrix-panel training-matrix">
+    <view
+      wx:for="{{state.cards}}"
+      wx:key="id"
+      class="matrix-card {{item.state === 'hidden' ? 'matrix-card--hidden' : 'matrix-card--flipped'}} {{item.state === 'used' ? 'matrix-card--used' : ''}} {{item.isSelected ? 'matrix-card--selected' : ''}}"
+      data-id="{{item.id}}"
+      bindtap="handleCardTap"
+    >
+      <view wx:if="{{item.state === 'hidden'}}" class="matrix-hidden">
+        <text class="matrix-hidden-mark">⚡</text>
+      </view>
+
+      <view wx:else class="matrix-body">
+        <text class="matrix-word">{{item.word}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view
+    class="primary-button {{(!state.isComplete && state.selectedCount !== 2) ? 'button-disabled' : ''}}"
+    bindtap="handleProceed"
+  >
+    <text>{{state.isComplete ? '本轮完成，开启下一轮' : '进入 30 秒思考'}}</text>
+  </view>
+</view>

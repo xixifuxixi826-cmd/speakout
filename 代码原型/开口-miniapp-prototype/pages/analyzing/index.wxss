@@ -1,0 +1,52 @@
+.analyzing-hero,
+.analyzing-panel {
+  padding: 28rpx;
+}
+
+.analyzing-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 28rpx;
+}
+
+.analyzing-orbit {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 18rpx;
+  min-height: 120rpx;
+}
+
+.analyzing-dot {
+  width: 24rpx;
+  height: 24rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff6f8d 0%, #5a7bff 100%);
+  animation: analyzing-bounce 900ms infinite ease-in-out;
+}
+
+.analyzing-dot--2 {
+  animation-delay: 120ms;
+}
+
+.analyzing-dot--3 {
+  animation-delay: 240ms;
+}
+
+.analyzing-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+@keyframes analyzing-bounce {
+  0%, 100% {
+    transform: translateY(0) scale(0.9);
+    opacity: 0.55;
+  }
+
+  50% {
+    transform: translateY(-10rpx) scale(1.05);
+    opacity: 1;
+  }
+}

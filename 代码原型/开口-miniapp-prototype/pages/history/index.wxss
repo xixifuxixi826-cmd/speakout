@@ -1,0 +1,10 @@
+.history-item {
+  padding: 28rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.history-link {
+  font-weight: 700;
+}

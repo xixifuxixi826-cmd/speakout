@@ -1,0 +1,76 @@
+<view class="screen" wx:if="{{profile}}">
+  <view class="stack">
+    <view class="hero-card membership-hero">
+      <view class="stack-tight">
+        <text class="eyebrow">会员中心</text>
+        <text class="page-title">高手会员</text>
+        <text class="page-subtitle" wx:if="{{fromQuota}}">
+          今日免费轮次已用完，继续训练前需要开通会员。
+        </text>
+        <text class="page-subtitle" wx:else>
+          会员版重点解决的是频次限制和反馈深度限制。
+        </text>
+      </view>
+    </view>
+
+    <view class="plan-card membership-plan">
+      <view class="row-between">
+        <text class="section-title">连续包月</text>
+        <text class="page-title membership-price">¥19</text>
+      </view>
+      <view class="stack-tight">
+        <text class="section-copy">- 无限继续下一轮，不被 3 次免费额度拦截</text>
+        <text class="section-copy">- 查看完整 AI 点评和细分评分</text>
+        <text class="section-copy">- 历史记录可长期回看</text>
+        <text class="section-copy">- 后续可接个性化词池推荐</text>
+      </view>
+    </view>
+
+    <view class="upsell-card membership-note">
+      <text class="section-title">开通后可获得</text>
+      <text class="section-copy">
+        无限训练轮次、完整 AI 点评拆解、更长历史记录以及后续的个性化词池。
+      </text>
+    </view>
+
+    <view wx:if="{{profile.isMember}}" class="primary-button" bindtap="handleGoProfile">
+      <text>已开通，回到我的</text>
+    </view>
+    <view wx:else class="primary-button" bindtap="handleOpenPay">
+      <text>立即开通会员</text>
+    </view>
+  </view>
+
+  <view wx:if="{{showPaySheet}}" class="sheet-mask">
+    <view class="sheet-panel">
+      <view class="stack">
+        <view class="stack-tight">
+          <text class="section-title">确认支付</text>
+          <text class="section-copy">表达高手会员｜连续包月 ¥19</text>
+          <text class="section-copy muted">支付方式：微信支付</text>
+        </view>
+
+        <view class="status-row">
+          <view class="status-chip status-chip--ink">
+            <text>{{paymentState === 'processing' ? '支付处理中' : '待支付'}}</text>
+          </view>
+          <view class="status-chip">
+            <text>完整点评</text>
+          </view>
+          <view class="status-chip">
+            <text>无限训练</text>
+          </view>
+        </view>
+
+        <view class="stack-tight">
+          <view class="secondary-button" bindtap="handleActivate">
+            <text>{{isPaying ? '支付处理中...' : '确认支付并开通'}}</text>
+          </view>
+          <view class="ghost-button" bindtap="handleClosePay">
+            <text>取消</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

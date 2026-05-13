@@ -1,0 +1,12 @@
+.DS_Store
+__pycache__/
+*.pyc
+
+# Local runtime and secrets
+backend/runtime_config.json
+backend/data/
+
+# Local logs and temp files
+*.log
+tmp/
+temp/

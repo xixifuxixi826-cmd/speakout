@@ -1,0 +1,80 @@
+<view class="screen">
+  <view class="stack">
+    <view class="row-between">
+      <view class="stack-tight">
+        <text class="eyebrow">表达阶段</text>
+        <text class="page-title">2 分钟表达</text>
+      </view>
+      <view class="status-chip status-chip--ink">
+        <text class="mono">{{clockText}}</text>
+      </view>
+    </view>
+
+    <view class="editor-panel speaking-editor">
+      <view class="speaking-focus">
+        <text class="speaking-focus__label">本次关键词</text>
+        <view class="chip-row speaking-chip-row speaking-chip-row--spotlight">
+          <view wx:for="{{selectedCards}}" wx:key="id" class="pill-chip pill-chip--selected speaking-chip speaking-chip--spotlight">
+            <text>{{item.word}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="speaking-head">
+        <view class="stack-tight speaking-head-copy">
+          <text class="section-title">实时转写</text>
+          <text class="section-copy">先说出你的判断句，再顺着一个具体场景或人物状态，把“为什么成立”讲清楚。</text>
+        </view>
+        <view class="pulse-ring">
+          <text class="pulse-ring__label">{{isRecording ? '录音中' : '准备好'}}</text>
+        </view>
+      </view>
+
+      <view class="audio-bars">
+        <view class="audio-bar audio-bar--1"></view>
+        <view class="audio-bar audio-bar--2"></view>
+        <view class="audio-bar audio-bar--3"></view>
+        <view class="audio-bar audio-bar--4"></view>
+        <view class="audio-bar audio-bar--5"></view>
+        <view class="audio-bar audio-bar--6"></view>
+      </view>
+
+      <view class="speaking-action-row">
+        <view class="secondary-button speaking-action speaking-action--primary" bindtap="handleStartRecording">
+          <text>{{isRecording ? '转写进行中' : '开始录音'}}</text>
+        </view>
+        <view class="ghost-button speaking-action" bindtap="handleStopRecording">
+          <text>结束录音</text>
+        </view>
+      </view>
+
+      <view class="speaking-action-row speaking-action-row--secondary">
+        <view class="ghost-button speaking-action speaking-action--wide" bindtap="handleResetRecording">
+          <text>重新录制</text>
+        </view>
+      </view>
+
+      <view class="transcript-board">
+        <view class="row-between">
+          <text class="section-title">实时转写</text>
+          <text class="muted">
+            {{transcriptStatus === 'recording' ? '识别中...' : transcriptStatus === 'finished' ? '已完成' : '等待录音'}}
+          </text>
+        </view>
+        <textarea
+          class="transcript-input"
+          value="{{transcriptText}}"
+          placeholder="点击“开始录音”后，这里会实时显示你的表达内容；如果识别得不准，也可以直接手动修改。"
+          maxlength="-1"
+          auto-height="true"
+          cursor-spacing="24"
+          bindinput="handleTranscriptInput"
+        />
+      </view>
+    </view>
+
+    <view class="primary-button" bindtap="handleSubmit">
+      <text>提交给 AI 点评</text>
+    </view>
+  </view>
+</view>

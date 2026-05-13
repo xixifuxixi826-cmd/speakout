@@ -1,0 +1,7 @@
+{
+  "model_api_url": "https://your-provider.example.com/v1/chat/completions",
+  "model_api_key": "YOUR_API_KEY",
+  "model_api_model": "gpt-4o",
+  "model_provider_code": "your-provider",
+  "require_real_ai": true
+}

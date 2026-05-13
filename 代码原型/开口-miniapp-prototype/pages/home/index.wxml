@@ -1,0 +1,57 @@
+<view style="min-height: 100vh; padding: 24rpx; background: #fff7fb;">
+  <view style="background: #ffffff; border-radius: 32rpx; padding: 28rpx; box-sizing: border-box;">
+    <view style="display: flex; flex-wrap: wrap; gap: 12rpx; margin-bottom: 18rpx;">
+      <text style="background: #ffd6e5; color: #29305a; font-size: 22rpx; font-weight: 700; padding: 10rpx 18rpx; border-radius: 999rpx;">微信小程序原型</text>
+      <text style="background: #d6f6ff; color: #29305a; font-size: 22rpx; font-weight: 700; padding: 10rpx 18rpx; border-radius: 999rpx;">表达训练</text>
+      <text style="background: #e7ffb8; color: #29305a; font-size: 22rpx; font-weight: 700; padding: 10rpx 18rpx; border-radius: 999rpx;">AI反馈</text>
+    </view>
+
+    <text style="display:block; font-size: 22rpx; color: #ff5f7a; letter-spacing: 6rpx; font-weight: 700; margin-bottom: 14rpx;">BIAODA GAOSHOU</text>
+    <text style="display:block; font-size: 58rpx; line-height: 1.08; color: #1d2240; font-weight: 800; margin-bottom: 16rpx;">表达高手</text>
+    <text style="display:block; font-size: 28rpx; line-height: 1.7; color: #5f678e; margin-bottom: 22rpx;">用 16 张高能形容词卡，把表达训练做得更轻、更快，也更上头。</text>
+
+    <view style="display:flex; flex-wrap:wrap; gap: 12rpx; margin-bottom: 22rpx;">
+      <text style="background:#2c3e92; color:#ffffff; font-size:24rpx; font-weight:700; padding:12rpx 22rpx; border-radius:999rpx;">{{memberLabel}}</text>
+      <text style="background:#e7fff2; color:#27604b; font-size:24rpx; font-weight:700; padding:12rpx 22rpx; border-radius:999rpx;">剩余训练 {{remainingQuotaText}}</text>
+      <text style="background:#eef2ff; color:#4e598d; font-size:24rpx; font-weight:700; padding:12rpx 22rpx; border-radius:999rpx;">{{activeRoundText}}</text>
+    </view>
+
+    <view style="display:flex; flex-wrap:wrap; justify-content:space-between; margin-bottom: 22rpx;">
+      <view style="width:48%; background:#fff7fb; border-radius:24rpx; padding:20rpx; margin-bottom:12rpx; box-sizing:border-box;">
+        <text style="display:block; font-size:40rpx; font-weight:800; color:#1d2240;">16</text>
+        <text style="display:block; font-size:22rpx; color:#6a7197; margin-top:8rpx;">每轮形容词卡</text>
+      </view>
+      <view style="width:48%; background:#f6fbff; border-radius:24rpx; padding:20rpx; margin-bottom:12rpx; box-sizing:border-box;">
+        <text style="display:block; font-size:40rpx; font-weight:800; color:#1d2240;">30s</text>
+        <text style="display:block; font-size:22rpx; color:#6a7197; margin-top:8rpx;">极速构思</text>
+      </view>
+      <view style="width:48%; background:#fffdf3; border-radius:24rpx; padding:20rpx; margin-bottom:12rpx; box-sizing:border-box;">
+        <text style="display:block; font-size:40rpx; font-weight:800; color:#1d2240;">2min</text>
+        <text style="display:block; font-size:22rpx; color:#6a7197; margin-top:8rpx;">开口表达</text>
+      </view>
+      <view style="width:48%; background:#f8fff4; border-radius:24rpx; padding:20rpx; margin-bottom:12rpx; box-sizing:border-box;">
+        <text style="display:block; font-size:40rpx; font-weight:800; color:#1d2240;">AI</text>
+        <text style="display:block; font-size:22rpx; color:#6a7197; margin-top:8rpx;">即时反馈</text>
+      </view>
+    </view>
+
+    <view bindtap="handleStart" style="height: 88rpx; border-radius: 999rpx; background: #ff6a84; color: #ffffff; display:flex; align-items:center; justify-content:center; font-size:30rpx; font-weight:800;">
+      <text>{{startButtonText}}</text>
+    </view>
+  </view>
+
+  <view style="background:#ffffff; border-radius:32rpx; padding:28rpx; margin-top:24rpx;">
+    <text style="display:block; font-size:34rpx; color:#20274d; font-weight:800; margin-bottom:14rpx;">怎么玩</text>
+    <text style="display:block; font-size:26rpx; line-height:1.7; color:#61688e;">1. 4×4 矩阵全部都是形容词卡，先翻牌，再自由选 2 张。</text>
+    <text style="display:block; font-size:26rpx; line-height:1.7; color:#61688e;">2. 用这两个词先组成“ A 是 B ”或“ A 是一种 B ”这样的观点句。</text>
+    <text style="display:block; font-size:26rpx; line-height:1.7; color:#61688e;">3. 再用 30 秒构思、2 分钟表达，强行解释这个观点为什么成立。</text>
+    <text style="display:block; font-size:26rpx; line-height:1.7; color:#61688e;">4. 免费用户默认 3 次轮次，会员可无限继续。</text>
+  </view>
+
+  <view wx:if="{{hasLatestHistory}}" style="background:#ffffff; border-radius:32rpx; padding:28rpx; margin-top:24rpx;">
+    <text style="display:block; font-size:34rpx; color:#20274d; font-weight:800; margin-bottom:14rpx;">最近一次训练</text>
+    <text style="display:block; font-size:26rpx; line-height:1.7; color:#61688e;">{{latestHistoryTitle}}</text>
+    <text style="display:block; font-size:24rpx; line-height:1.7; color:#7a81a5;">AI 评分 {{latestHistoryScore}} / 100</text>
+    <text style="display:block; font-size:26rpx; line-height:1.7; color:#61688e;">{{latestHistorySummary}}</text>
+  </view>
+</view>

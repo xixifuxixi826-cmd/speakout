@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>表达高手｜后台原型</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">表达高手</div>
+          <p>运营与 AI 配置台</p>
+        </div>
+
+        <nav class="nav">
+          <button class="nav-link nav-link--active" data-view="overview">概览</button>
+          <button class="nav-link" data-view="users">用户列表</button>
+          <button class="nav-link" data-view="orders">订单列表</button>
+          <button class="nav-link" data-view="words">内容管理</button>
+          <button class="nav-link" data-view="prompts">AI Prompt</button>
+          <button class="nav-link" data-view="jobs">AI 评分任务</button>
+        </nav>
+      </aside>
+
+      <section class="content">
+        <section class="admin-view admin-view--active" data-view="overview">
+          <header class="hero">
+            <div>
+              <span class="eyebrow">运营后台</span>
+              <h1>表达高手管理台</h1>
+              <p>把用户、训练、付费、词库和 AI 评分配置收进同一个后台，让运营、内容和算法调优都能跑在一条闭环里。</p>
+            </div>
+            <button class="primary-button">导出今日数据</button>
+          </header>
+
+          <section class="metrics" id="overview-metrics"></section>
+        </section>
+
+        <section class="admin-view" data-view="users">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <span class="eyebrow">用户</span>
+                <h2>用户列表</h2>
+              </div>
+              <div class="filters">
+                <span>全部用户</span>
+                <span>近 7 日活跃</span>
+                <span>会员</span>
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>用户</th>
+                  <th>注册时间</th>
+                  <th>活跃状态</th>
+                  <th>会员状态</th>
+                  <th>训练摘要</th>
+                </tr>
+              </thead>
+              <tbody id="users-table"></tbody>
+            </table>
+          </section>
+        </section>
+
+        <section class="admin-view" data-view="orders">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <span class="eyebrow">订单</span>
+                <h2>订单列表</h2>
+              </div>
+              <div class="filters">
+                <span>已支付</span>
+                <span>本月</span>
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>订单号</th>
+                  <th>用户</th>
+                  <th>金额</th>
+                  <th>状态</th>
+                  <th>支付时间</th>
+                </tr>
+              </thead>
+              <tbody id="orders-table"></tbody>
+            </table>
+          </section>
+        </section>
+
+        <section class="admin-view" data-view="words">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <span class="eyebrow">内容</span>
+                <h2>内容管理</h2>
+              </div>
+              <button class="ghost-button">新增词条</button>
+            </div>
+            <div class="word-grid" id="words-grid"></div>
+          </section>
+        </section>
+
+        <section class="admin-view" data-view="prompts">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <span class="eyebrow">AI Prompt</span>
+                <h2>Prompt 管理</h2>
+              </div>
+              <div class="filters">
+                <span>卡片联想评分</span>
+                <span>线上版本</span>
+              </div>
+            </div>
+
+            <div class="prompt-layout">
+              <article class="prompt-card" id="prompt-summary"></article>
+              <article class="prompt-card prompt-card--editor">
+                <div class="prompt-card__head">
+                  <div>
+                    <p class="prompt-card__eyebrow">测试台</p>
+                    <h3>Prompt 试跑样例</h3>
+                  </div>
+                  <span class="tag">真实模型试跑</span>
+                </div>
+
+                <div class="prompt-editor-grid">
+                  <div class="prompt-field">
+                    <label>选中词语</label>
+                    <input class="real-input" id="test-selected-words" value="自由 / 束缚" />
+                  </div>
+                  <div class="prompt-field">
+                    <label>会员等级</label>
+                    <div class="fake-input">免费版</div>
+                  </div>
+                  <div class="prompt-field prompt-field--full">
+                    <label>System Prompt</label>
+                    <textarea class="real-textarea" id="prompt-system-text"></textarea>
+                  </div>
+                  <div class="prompt-field prompt-field--full">
+                    <label>User Prompt Template</label>
+                    <textarea class="real-textarea" id="prompt-user-template"></textarea>
+                  </div>
+                  <div class="prompt-field prompt-field--full">
+                    <label>用户转写</label>
+                    <textarea class="real-textarea" id="test-user-text">我的观点是，自由是一种束缚。真正长久的自由，不是没有边界，而是你愿意主动承担什么边界，并且为这种选择负责。</textarea>
+                  </div>
+                  <div class="prompt-field prompt-field--full">
+                    <label>模型返回预览</label>
+                    <pre class="fake-textarea fake-textarea--code" id="test-result">点击“试跑一次”后，这里会出现结构化评分结果。</pre>
+                  </div>
+                </div>
+
+                <div class="prompt-actions">
+                  <button class="primary-button" id="save-prompt-config">保存为新版本</button>
+                  <button class="secondary-button" id="run-prompt-test">试跑一次</button>
+                </div>
+              </article>
+            </div>
+          </section>
+        </section>
+
+        <section class="admin-view" data-view="jobs">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <span class="eyebrow">AI 任务</span>
+                <h2>AI 评分任务</h2>
+              </div>
+              <div class="filters">
+                <span>失败任务</span>
+                <span>支持重试</span>
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>任务号</th>
+                  <th>会话</th>
+                  <th>Prompt 版本</th>
+                  <th>模型</th>
+                  <th>状态</th>
+                  <th>最近更新时间</th>
+                </tr>
+              </thead>
+              <tbody id="jobs-table"></tbody>
+            </table>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

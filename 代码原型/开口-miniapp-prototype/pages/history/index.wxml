@@ -1,0 +1,19 @@
+<view class="screen">
+  <view class="stack">
+    <view class="stack-tight">
+      <text class="eyebrow">训练记录</text>
+      <text class="page-title">训练记录</text>
+      <text class="page-subtitle">回看每次选词、表达摘录和 AI 点评。</text>
+    </view>
+
+    <view wx:for="{{records}}" wx:key="id" class="history-card history-item" data-id="{{item.id}}" bindtap="handleOpenDetail">
+      <view class="row-between">
+        <text class="section-title">{{item.title}}</text>
+        <text class="mono muted">{{item.score}}</text>
+      </view>
+      <text class="section-copy muted">{{item.timeLabel}}</text>
+      <text class="section-copy">{{item.summary}}</text>
+      <text class="section-copy history-link">查看详情 ></text>
+    </view>
+  </view>
+</view>

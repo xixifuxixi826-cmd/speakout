@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Speak Out</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand-block">
+          <span class="brand-kicker">SPEAK OUT</span>
+          <h1>表达高手</h1>
+        </div>
+        <button class="mode-pill" id="mode-pill"></button>
+      </header>
+
+      <main id="app"></main>
+
+      <nav class="bottom-bar">
+        <button class="bottom-link is-active" data-tab="train">训练</button>
+        <button class="bottom-link" data-tab="history">记录</button>
+        <button class="bottom-link" data-tab="profile">我的</button>
+      </nav>
+    </div>
+
+    <template id="landing-template">
+      <section class="screen screen-landing">
+        <article class="hero-panel">
+          <div class="hero-copy">
+            <span class="eyebrow">两词成句，强行联想</span>
+            <h2>把两个词，讲成一个有意思的观点。</h2>
+            <p>
+              从 16 张高张力词卡里选 2 张，立一句判断，再把它为什么成立讲清楚。
+            </p>
+          </div>
+          <div class="hero-stats" id="hero-stats"></div>
+          <button class="primary-btn" id="start-training">开始这一轮</button>
+        </article>
+
+        <article class="soft-panel">
+          <div class="panel-title-row">
+            <h3>怎么玩</h3>
+          </div>
+          <div class="guide-list">
+            <div class="guide-item">
+              <span>01</span>
+              <p>翻开词卡，选 2 张最有张力的词。</p>
+            </div>
+            <div class="guide-item">
+              <span>02</span>
+              <p>用 “A 是 B” 或 “A 是一种 B” 先立一句判断。</p>
+            </div>
+            <div class="guide-item">
+              <span>03</span>
+              <p>30 秒构思，2 分钟表达，然后交给教练点评。</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="soft-panel" id="latest-card"></article>
+      </section>
+    </template>
+
+    <template id="training-template">
+      <section class="screen">
+        <article class="training-header">
+          <div class="training-header-copy">
+            <span class="eyebrow" id="round-label"></span>
+            <h2>选词训练</h2>
+          </div>
+          <div class="quota-chip" id="quota-chip"></div>
+        </article>
+
+        <section class="selected-row" id="selected-row"></section>
+
+        <section class="matrix-grid" id="matrix-grid"></section>
+
+        <button class="primary-btn" id="proceed-training">进入 30 秒构思</button>
+
+        <article class="soft-panel compact-panel training-tip-panel">
+          <p>先选两个词，再用 “A 是 B” 或 “A 是一种 B” 立一句判断。</p>
+        </article>
+      </section>
+    </template>
+
+    <template id="thinking-template">
+      <section class="screen">
+        <article class="soft-panel thinking-panel">
+          <span class="eyebrow">构思阶段</span>
+          <h2>30 秒，把这句话立住</h2>
+          <p>先想一个最能证明这句话成立的场景，再决定你从哪里开口。</p>
+          <div class="timer-ring"><span id="thinking-clock">00:30</span></div>
+          <div class="selected-row selected-row--center" id="thinking-words"></div>
+        </article>
+
+        <article class="soft-panel">
+          <div class="method-card">
+            <strong>思考方法 1</strong>
+            <p>把一个词当外在表现，另一个词当内在状态，看看它们能不能同时落到一个人身上。</p>
+          </div>
+          <div class="method-card">
+            <strong>思考方法 2</strong>
+            <p>先想一个具体场景，比如开会、告别、上台，再判断这两个词在里面怎么同时成立。</p>
+          </div>
+          <div class="method-card">
+            <strong>思考方法 3</strong>
+            <p>先想一句“因为……所以……”，把抽象词拉回到能被听懂的细节里。</p>
+          </div>
+        </article>
+
+        <button class="secondary-btn" id="skip-thinking">直接开始表达</button>
+      </section>
+    </template>
+
+    <template id="speaking-template">
+      <section class="screen">
+        <article class="soft-panel speaking-panel">
+          <div class="panel-title-row">
+            <div>
+              <span class="eyebrow">表达阶段</span>
+              <h2>先讲出来，再慢慢讲好</h2>
+            </div>
+          </div>
+
+          <div class="selected-row selected-row--center" id="speaking-words"></div>
+
+          <div class="soft-tip-strip">
+            <strong>不用等想完整。</strong>
+            <span>想到什么先讲什么，先把判断立出来，再慢慢补解释。</span>
+          </div>
+
+          <div class="transcript-card">
+            <div class="panel-title-row">
+              <strong>转写内容</strong>
+              <span class="muted" id="transcript-status">准备开始</span>
+            </div>
+            <div class="transcript-topbar">
+              <div class="soft-speech-hint">点输入框后，用手机输入法的语音按钮开始讲。</div>
+              <div class="clock-pill clock-pill--inline" id="speaking-clock">02:00</div>
+            </div>
+            <textarea
+              id="transcript-input"
+              placeholder="点这里，直接用手机键盘的语音输入，把你想说的内容先讲出来。"
+            ></textarea>
+          </div>
+
+          <div class="action-row action-row--compact action-row--dual">
+            <button class="secondary-btn" id="focus-input">点输入框开始讲</button>
+            <button class="ghost-btn" id="reset-record">清空重来</button>
+          </div>
+        </article>
+
+        <button class="primary-btn" id="submit-speaking">提交给教练点评</button>
+      </section>
+    </template>
+
+    <template id="analyzing-template">
+      <section class="screen">
+        <article class="hero-panel analyzing-panel">
+          <span class="eyebrow">教练点评中</span>
+          <h2>教练正在看这一次表达</h2>
+          <p id="analyzing-subtitle">会先看判断句是否成立，再看解释是否具体、自然、能被人跟上。</p>
+          <div class="analyzing-orbit">
+            <span></span><span></span><span></span>
+          </div>
+          <div class="selected-row selected-row--center" id="analyzing-words"></div>
+        </article>
+      </section>
+    </template>
+
+    <template id="feedback-template">
+      <section class="screen">
+        <article class="hero-panel feedback-hero">
+          <span class="eyebrow">教练点评</span>
+          <h2 id="feedback-title"></h2>
+          <p id="feedback-summary"></p>
+        </article>
+
+        <article class="score-panel">
+          <div class="score-main">
+            <span class="muted">总评</span>
+            <div class="score-number" id="feedback-score"></div>
+          </div>
+          <div class="meta-stack meta-stack--right">
+            <span id="feedback-model"></span>
+          </div>
+        </article>
+
+        <article class="soft-panel" id="feedback-radar"></article>
+        <article class="soft-panel" id="feedback-details"></article>
+        <article class="soft-panel" id="feedback-suggestions"></article>
+        <article class="soft-panel" id="feedback-thinking"></article>
+
+        <div class="cta-stack">
+          <button class="primary-btn" id="continue-training">继续下一步</button>
+          <button class="ghost-btn" id="retry-speaking">按建议再说一次</button>
+        </div>
+      </section>
+    </template>
+
+    <template id="history-template">
+      <section class="screen">
+        <article class="soft-panel">
+          <div class="panel-title-row">
+            <div>
+              <span class="eyebrow">训练记录</span>
+              <h2>表达记录</h2>
+            </div>
+          </div>
+          <p class="muted">每次开口表达都有意义。</p>
+          <div id="history-list" class="history-list"></div>
+        </article>
+      </section>
+    </template>
+
+    <template id="profile-template">
+      <section class="screen">
+        <article class="hero-panel">
+          <span class="eyebrow">个人中心</span>
+          <h2 id="profile-plan"></h2>
+          <p id="profile-quota"></p>
+          <button class="primary-btn" id="open-membership">升级为高手会员</button>
+        </article>
+
+        <article class="soft-panel">
+          <div class="guide-list">
+            <div class="guide-item">
+              <span>会员</span>
+              <p>解锁完整点评、无限轮次、更长历史记录。</p>
+            </div>
+            <div class="guide-item">
+              <span>兑换码</span>
+              <p>H5 版建议先走外部下单，再用兑换码开通会员。</p>
+            </div>
+          </div>
+        </article>
+      </section>
+    </template>
+
+    <template id="membership-template">
+      <section class="screen">
+        <article class="hero-panel">
+          <span class="eyebrow">会员开通</span>
+          <h2>输入兑换码<br />立即开通会员</h2>
+          <p>下单后回到这里输入兑换码，就可以继续解锁完整点评和更多训练轮次。</p>
+          <div class="soft-code-box">示例兑换码：GAOSHOU-2026-VIP</div>
+        </article>
+
+        <article class="soft-panel">
+          <div class="field-stack">
+            <label class="field-label" for="redeem-code-input">兑换码</label>
+            <input
+              id="redeem-code-input"
+              class="text-input"
+              placeholder="例如 GAOSHOU-2026-VIP"
+              autocomplete="off"
+            />
+          </div>
+          <div class="cta-stack" style="margin-top: 16px;">
+            <button class="primary-btn" id="redeem-submit">立即开通会员</button>
+            <button class="ghost-btn" id="copy-demo-code">填入示例兑换码</button>
+          </div>
+          <p class="muted" id="redeem-message" style="margin-top: 14px;">
+            开通成功后，你的剩余轮次会立即切换为无限。
+          </p>
+        </article>
+      </section>
+    </template>
+
+    <template id="register-template">
+      <section class="screen">
+        <article class="hero-panel">
+          <span class="eyebrow">保存进度</span>
+          <h2>先把这次训练保存下来</h2>
+          <p>留一个昵称和联系方式，就能保住这次训练记录，也方便你找回会员权益。</p>
+        </article>
+
+        <article class="soft-panel">
+          <div class="field-stack">
+            <label class="field-label" for="register-nickname">你的昵称</label>
+            <input
+              id="register-nickname"
+              class="text-input"
+              placeholder="给自己起一个名字"
+              autocomplete="off"
+            />
+          </div>
+          <div class="field-stack" style="margin-top: 14px;">
+            <label class="field-label" for="register-contact">手机号或微信号</label>
+            <input
+              id="register-contact"
+              class="text-input"
+              placeholder="用于找回记录和会员权益"
+              autocomplete="off"
+            />
+          </div>
+          <p class="muted" id="register-message" style="margin-top: 14px;">
+            注册后可以保存本次详细点评、完整建议和后续训练记录。
+          </p>
+          <div class="cta-stack" style="margin-top: 18px;">
+            <button class="primary-btn" id="register-submit">保存我的进度</button>
+            <button class="ghost-btn" id="register-skip">暂时先不填</button>
+          </div>
+        </article>
+      </section>
+    </template>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

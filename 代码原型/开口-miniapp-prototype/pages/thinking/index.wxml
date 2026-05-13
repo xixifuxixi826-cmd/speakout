@@ -1,0 +1,39 @@
+<view class="screen">
+  <view class="stack">
+    <view class="stack-tight">
+      <text class="eyebrow">构思阶段</text>
+      <text class="page-title">30 秒构思</text>
+      <text class="page-subtitle">先把判断句立住，再快速找到一个人物状态、关系变化或具体场景去支撑它。</text>
+    </view>
+
+    <view class="chip-row thinking-chip-row">
+      <view wx:for="{{selectedCards}}" wx:key="id" class="pill-chip pill-chip--selected thinking-chip">
+        <text>{{item.word}}</text>
+      </view>
+    </view>
+
+    <view class="timer-panel thinking-timer">
+      <text class="timer-clock mono">{{clockText}}</text>
+      <text class="section-copy">先想一个最能证明这句话成立的画面，再决定从哪里开口。</text>
+    </view>
+
+    <view class="tip-card thinking-tip">
+      <view class="thinking-method">
+        <text class="thinking-tip-label">思考方法 1</text>
+        <text class="section-copy">把一个词当作外在表现，另一个词当作内在状态，看看它们能不能同时落在一个人身上。</text>
+      </view>
+      <view class="thinking-method">
+        <text class="thinking-tip-label">思考方法 2</text>
+        <text class="section-copy">先想一个具体场景，比如开会、告别、争执、上台，再判断这两个词在那个场景里怎么同时成立。</text>
+      </view>
+      <view class="thinking-method">
+        <text class="thinking-tip-label">思考方法 3</text>
+        <text class="section-copy">直接先想一句“因为……所以……”的解释，把抽象词拉回到能被听懂的细节里。</text>
+      </view>
+    </view>
+
+    <view class="secondary-button" bindtap="handleSkip">
+      <text>跳过思考，进入表达</text>
+    </view>
+  </view>
+</view>

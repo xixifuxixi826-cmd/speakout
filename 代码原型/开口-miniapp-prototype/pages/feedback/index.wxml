@@ -1,0 +1,60 @@
+<view class="screen" wx:if="{{feedback}}">
+  <view class="stack">
+    <view class="stack-tight">
+      <text class="eyebrow">AI 点评</text>
+      <text class="page-title">{{feedback.pairTitle}}</text>
+      <text class="page-subtitle">{{feedback.summary}}</text>
+    </view>
+
+    <view class="feedback-card feedback-score-card">
+      <view class="row-between">
+        <text class="section-title">总评</text>
+        <text class="feedback-score mono">{{feedback.totalScore}}</text>
+      </view>
+      <text wx:if="{{feedback.aiSource}}" class="section-copy muted">评分来源：{{feedback.aiSource}}</text>
+      <text class="section-copy">AI 当前重点看你有没有先立住一句观点，再把“为什么这样说得通”解释清楚。</text>
+    </view>
+
+    <view class="feedback-card feedback-detail-card">
+      <text class="section-title">评分拆解</text>
+      <view class="stack-tight">
+        <view wx:for="{{feedback.visibleDetails}}" wx:key="label" class="feedback-line">
+          <view class="row-between">
+            <text>{{item.label}}</text>
+            <text class="mono">{{item.score}}</text>
+          </view>
+          <text class="section-copy">{{item.note}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="feedback-card feedback-detail-card">
+      <text class="section-title">AI 建议</text>
+      <view class="stack-tight">
+        <text wx:for="{{feedback.suggestions}}" wx:key="*this" class="section-copy">- {{item}}</text>
+      </view>
+      <view class="divider"></view>
+      <text class="section-copy">{{feedback.rewrite}}</text>
+    </view>
+
+    <view wx:if="{{feedback.freeModeNote}}" class="upsell-card feedback-upsell">
+      <text class="section-title">高手会员提示</text>
+      <text class="section-copy">{{feedback.freeModeNote}}</text>
+      <view class="secondary-button" bindtap="handleGoMembership">
+        <text>去看会员版完整点评</text>
+      </view>
+    </view>
+
+    <view class="stack-tight">
+      <view class="primary-button" bindtap="handleContinue">
+        <text>{{feedback.isRoundComplete ? '进入下一轮' : '回到本轮继续翻牌'}}</text>
+      </view>
+      <view class="ghost-button" bindtap="handleRetry">
+        <text>按建议再说一次</text>
+      </view>
+      <view class="ghost-button" bindtap="handleViewDetail">
+        <text>查看历史详情</text>
+      </view>
+    </view>
+  </view>
+</view>

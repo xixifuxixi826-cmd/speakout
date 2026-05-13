@@ -1,0 +1,42 @@
+<view class="screen" wx:if="{{profile}}">
+  <view class="stack">
+    <view class="hero-card profile-hero">
+      <view class="stack-tight">
+        <text class="eyebrow">个人中心</text>
+        <text class="page-title">表达高手</text>
+        <text class="page-subtitle">{{profile.planName}}</text>
+      </view>
+
+      <view class="status-row">
+        <view class="status-chip status-chip--ink">
+          <text>{{profile.isMember ? '会员已开通' : '当前免费版'}}</text>
+        </view>
+        <view class="status-chip">
+          <text>已用 {{profile.usedFreeRounds}} / 3</text>
+        </view>
+        <view class="status-chip">
+          <text>剩余 {{profile.remainingQuota === Infinity ? '无限次' : profile.remainingQuota}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="plan-card profile-plan">
+      <view class="stack-tight">
+        <text class="section-title">会员能解锁什么</text>
+        <text class="section-copy">- 无限训练轮次</text>
+        <text class="section-copy">- 完整 AI 点评拆解</text>
+        <text class="section-copy">- 更长历史记录可见范围</text>
+        <text class="section-copy">- 个性化词池推荐</text>
+      </view>
+    </view>
+
+    <view class="stack-tight">
+      <view class="primary-button" bindtap="handleOpenMembership">
+        <text>{{profile.isMember ? '查看会员权益' : '立即开通会员'}}</text>
+      </view>
+      <view class="ghost-button" bindtap="handleOpenHistory">
+        <text>查看训练记录</text>
+      </view>
+    </view>
+  </view>
+</view>

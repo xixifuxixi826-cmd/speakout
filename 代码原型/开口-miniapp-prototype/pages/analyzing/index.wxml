@@ -1,0 +1,27 @@
+<view class="screen">
+  <view class="stack">
+    <view class="hero-card analyzing-hero">
+      <view class="stack-tight">
+        <text class="eyebrow">导师分析中</text>
+        <text class="page-title">正在生成本次点评</text>
+        <text class="page-subtitle">{{subStatusText}}</text>
+      </view>
+
+      <view class="analyzing-orbit">
+        <view class="analyzing-dot analyzing-dot--1"></view>
+        <view class="analyzing-dot analyzing-dot--2"></view>
+        <view class="analyzing-dot analyzing-dot--3"></view>
+      </view>
+    </view>
+
+    <view class="plan-card analyzing-panel">
+      <text class="section-title">{{statusText}}</text>
+      <view class="chip-row speaking-chip-row speaking-chip-row--spotlight">
+        <view wx:for="{{selectedCards}}" wx:key="id" class="pill-chip pill-chip--selected speaking-chip speaking-chip--spotlight">
+          <text>{{item.word}}</text>
+        </view>
+      </view>
+      <text class="section-copy">你可以把它理解为 3 步：先看判断句，再看解释逻辑，最后给你一版更顺的重说方式。</text>
+    </view>
+  </view>
+</view>

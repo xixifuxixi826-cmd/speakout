@@ -1,0 +1,52 @@
+{
+  "pages": [
+    "pages/home/index",
+    "pages/training/index",
+    "pages/thinking/index",
+    "pages/speaking/index",
+    "pages/analyzing/index",
+    "pages/feedback/index",
+    "pages/history/index",
+    "pages/history-detail/index",
+    "pages/profile/index",
+    "pages/membership/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "表达高手",
+    "navigationBarBackgroundColor": "#fff8ff",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#fff8ff",
+    "backgroundTextStyle": "dark"
+  },
+  "networkTimeout": {
+    "request": 60000
+  },
+  "tabBar": {
+    "color": "#83779d",
+    "selectedColor": "#ff5f7a",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "text": "首页",
+        "iconPath": "assets/tabbar/home.png",
+        "selectedIconPath": "assets/tabbar/home-active.png"
+      },
+      {
+        "pagePath": "pages/history/index",
+        "text": "记录",
+        "iconPath": "assets/tabbar/history.png",
+        "selectedIconPath": "assets/tabbar/history-active.png"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "text": "我的",
+        "iconPath": "assets/tabbar/profile.png",
+        "selectedIconPath": "assets/tabbar/profile-active.png"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}
