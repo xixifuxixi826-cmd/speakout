@@ -5,7 +5,10 @@ const API_BASE = (() => {
   if (window.location.port === "8088") {
     return `${window.location.protocol}//${window.location.hostname}:8765`;
   }
-  return window.location.origin;
+  if (window.location.hostname === "getspeakout.com" || window.location.hostname.endsWith(".getspeakout.com")) {
+    return "https://api.getspeakout.com";
+  }
+  return `${window.location.protocol}//api.${window.location.hostname}`;
 })();
 
 const state = {
