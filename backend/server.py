@@ -1376,8 +1376,8 @@ class AppHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed = urlparse(self.path)
         path = parsed.path
-        if path == "/health":
-            self.ok({"status": "ok"})
+        if path in ("/", "/health"):
+            self.ok({"status": "ok", "service": "speakout-backend"})
             return
 
         conn = db()
