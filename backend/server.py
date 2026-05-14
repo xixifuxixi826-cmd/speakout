@@ -1337,10 +1337,77 @@ def admin_redeem_codes(conn):
             "code": row["code"],
             "planName": row["plan_name"],
             "status": row["status"],
+            "usedBy": row["used_by"] or "-",
             "usedAt": row["used_at"] or "-",
         }
         for row in rows
     ]
+
+
+def generate_redeem_codes(conn, quantity, plan_name, prefix="SPEAKOUT"):
+    try:
+        quantity = int(quantity)
+    except (TypeError, ValueError):
+        raise ValueError("生成数量必须是数字")
+
+    if quantity <= 0 or quantity > 100:
+        raise ValueError("单次最多生成 100 个兑换码")
+
+    plan_name = (plan_name or "").strip() or "高手会员"
+    prefix = "".join(ch for ch in (prefix or "SPEAKOUT").upper() if ch.isalnum())[:12] or "SPEAKOUT"
+
+    created = []
+    for _ in range(quantity):
+        while True:
+            suffix = uuid.uuid4().hex[:8].upper()
+            code = f"{prefix}-{suffix}"
+            exists = conn.execute("SELECT 1 FROM redeem_codes WHERE code = ?", (code,)).fetchone()
+            if not exists:
+                break
+        conn.execute(
+            "INSERT INTO redeem_codes (code, plan_name, status, used_by, used_at) VALUES (?, ?, 'active', NULL, NULL)",
+            (code, plan_name),
+        )
+        created.append(
+            {
+                "code": code,
+                "planName": plan_name,
+                "status": "active",
+                "usedBy": "-",
+                "usedAt": "-",
+            }
+        )
+
+    conn.commit()
+    return {
+        "createdCount": len(created),
+        "codes": created,
+    }
+
+
+def update_redeem_code_status(conn, code, status):
+    code = (code or "").strip().upper()
+    status = (status or "").strip().lower()
+    if not code:
+        raise ValueError("请先选择兑换码")
+    if status not in ("active", "inactive"):
+        raise ValueError("状态只支持 active 或 inactive")
+
+    row = conn.execute("SELECT * FROM redeem_codes WHERE code = ?", (code,)).fetchone()
+    if not row:
+        raise ValueError("兑换码不存在")
+    if row["status"] == "used":
+        raise ValueError("已使用的兑换码不能再改状态")
+
+    conn.execute(
+        "UPDATE redeem_codes SET status = ? WHERE code = ?",
+        (status, code),
+    )
+    conn.commit()
+    return {
+        "code": code,
+        "status": status,
+    }
 
 
 class AppHandler(BaseHTTPRequestHandler):
@@ -1477,6 +1544,17 @@ class AppHandler(BaseHTTPRequestHandler):
                 )
             elif path == "/admin-api/config/runtime/update":
                 self.ok(update_runtime_config(conn, body))
+            elif path == "/admin-api/redeem-codes/generate":
+                self.ok(
+                    generate_redeem_codes(
+                        conn,
+                        body.get("quantity", 10),
+                        body.get("planName", "高手会员"),
+                        body.get("prefix", "SPEAKOUT"),
+                    )
+                )
+            elif path == "/admin-api/redeem-codes/status":
+                self.ok(update_redeem_code_status(conn, body.get("code", ""), body.get("status", "")))
             else:
                 self.fail("接口不存在", 404)
         except ValueError as error:

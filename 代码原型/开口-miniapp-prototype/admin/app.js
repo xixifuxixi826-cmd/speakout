@@ -85,6 +85,43 @@ function renderOrders(orders) {
     .join("");
 }
 
+function renderRedeemCodes(codes) {
+  qs("#redeem-codes-table").innerHTML = codes
+    .map(
+      (item) => `
+        <tr>
+          <td>${item.code}</td>
+          <td>${item.planName}</td>
+          <td>${item.status}</td>
+          <td>${item.usedBy}</td>
+          <td>${item.usedAt}</td>
+          <td>
+            ${item.status === "active" ? `<button class="ghost-button redeem-toggle" data-code="${item.code}" data-status="inactive">停用</button>` : ""}
+            ${item.status === "inactive" ? `<button class="ghost-button redeem-toggle" data-code="${item.code}" data-status="active">恢复</button>` : ""}
+          </td>
+        </tr>
+      `
+    )
+    .join("");
+
+  qsa(".redeem-toggle").forEach((button) => {
+    button.addEventListener("click", async () => {
+      try {
+        await getJson("/admin-api/redeem-codes/status", {
+          method: "POST",
+          body: JSON.stringify({
+            code: button.dataset.code,
+            status: button.dataset.status
+          })
+        });
+        await refreshRedeemCodes();
+      } catch (error) {
+        qs("#redeem-generate-result").textContent = `状态更新失败：${error.message}`;
+      }
+    });
+  });
+}
+
 function renderWords(words) {
   qs("#words-grid").innerHTML = words
     .map(
@@ -231,16 +268,36 @@ async function saveRuntimeConfig() {
   );
 }
 
+async function refreshRedeemCodes() {
+  const codes = await getJson("/admin-api/redeem-codes");
+  renderRedeemCodes(codes);
+}
+
+async function generateRedeemCodes() {
+  const result = await getJson("/admin-api/redeem-codes/generate", {
+    method: "POST",
+    body: JSON.stringify({
+      quantity: Number(qs("#redeem-generate-quantity").value || 10),
+      prefix: qs("#redeem-generate-prefix").value.trim(),
+      planName: qs("#redeem-generate-plan").value.trim()
+    })
+  });
+
+  qs("#redeem-generate-result").textContent = result.codes.map((item) => item.code).join("\n");
+  renderRedeemCodes([...(result.codes || []), ...((await getJson("/admin-api/redeem-codes")).filter((item) => !result.codes.some((created) => created.code === item.code)))]);
+}
+
 async function bootstrap() {
   try {
-    const [overview, users, orders, words, prompts, jobs, runtimeConfig] = await Promise.all([
+    const [overview, users, orders, words, prompts, jobs, runtimeConfig, redeemCodes] = await Promise.all([
       getJson("/admin-api/dashboard/overview"),
       getJson("/admin-api/users"),
       getJson("/admin-api/orders"),
       getJson("/admin-api/content/words"),
       getJson("/admin-api/config/ai-prompts"),
       getJson("/admin-api/ai-feedback/jobs"),
-      getJson("/admin-api/config/runtime")
+      getJson("/admin-api/config/runtime"),
+      getJson("/admin-api/redeem-codes")
     ]);
 
     renderOverview(overview);
@@ -250,6 +307,7 @@ async function bootstrap() {
     renderPromptSummary(prompts);
     renderJobs(jobs);
     renderRuntimeConfig(runtimeConfig);
+    renderRedeemCodes(redeemCodes);
   } catch (error) {
     console.error(error);
     document.body.insertAdjacentHTML(
@@ -278,6 +336,12 @@ qs("#save-prompt-config").addEventListener("click", () => {
 qs("#save-runtime-config").addEventListener("click", () => {
   saveRuntimeConfig().catch((error) => {
     qs("#runtime-save-result").textContent = `保存失败：${error.message}`;
+  });
+});
+
+qs("#generate-redeem-codes").addEventListener("click", () => {
+  generateRedeemCodes().catch((error) => {
+    qs("#redeem-generate-result").textContent = `生成失败：${error.message}`;
   });
 });
 

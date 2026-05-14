@@ -18,6 +18,7 @@
           <button class="nav-link nav-link--active" data-view="overview">概览</button>
           <button class="nav-link" data-view="users">用户列表</button>
           <button class="nav-link" data-view="orders">订单列表</button>
+          <button class="nav-link" data-view="codes">兑换码</button>
           <button class="nav-link" data-view="words">内容管理</button>
           <button class="nav-link" data-view="prompts">AI Prompt</button>
           <button class="nav-link" data-view="jobs">AI 评分任务</button>
@@ -90,6 +91,80 @@
               </thead>
               <tbody id="orders-table"></tbody>
             </table>
+          </section>
+        </section>
+
+        <section class="admin-view" data-view="codes">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <span class="eyebrow">会员兑换</span>
+                <h2>兑换码管理</h2>
+              </div>
+              <div class="filters">
+                <span>小红书订单</span>
+                <span>批量发码</span>
+              </div>
+            </div>
+
+            <div class="prompt-layout">
+              <article class="prompt-card">
+                <div class="prompt-card__head">
+                  <div>
+                    <p class="prompt-card__eyebrow">快速生成</p>
+                    <h3>批量创建兑换码</h3>
+                  </div>
+                  <span class="tag">适合发货</span>
+                </div>
+
+                <div class="prompt-editor-grid">
+                  <div class="prompt-field">
+                    <label>生成数量</label>
+                    <input class="real-input" id="redeem-generate-quantity" type="number" min="1" max="100" value="10" />
+                  </div>
+                  <div class="prompt-field">
+                    <label>前缀</label>
+                    <input class="real-input" id="redeem-generate-prefix" value="XHSVIP" />
+                  </div>
+                  <div class="prompt-field prompt-field--full">
+                    <label>会员方案</label>
+                    <input class="real-input" id="redeem-generate-plan" value="高手会员" />
+                  </div>
+                  <div class="prompt-field prompt-field--full">
+                    <label>生成结果</label>
+                    <pre class="fake-textarea fake-textarea--code" id="redeem-generate-result">点击“生成兑换码”后，这里会出现可复制的兑换码列表。</pre>
+                  </div>
+                </div>
+
+                <div class="prompt-actions">
+                  <button class="primary-button" id="generate-redeem-codes">生成兑换码</button>
+                </div>
+              </article>
+
+              <article class="prompt-card">
+                <div class="prompt-card__head">
+                  <div>
+                    <p class="prompt-card__eyebrow">兑换码列表</p>
+                    <h3>当前可用与已使用</h3>
+                  </div>
+                  <span class="tag">支持停用</span>
+                </div>
+
+                <table>
+                  <thead>
+                    <tr>
+                      <th>兑换码</th>
+                      <th>方案</th>
+                      <th>状态</th>
+                      <th>使用人</th>
+                      <th>使用时间</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="redeem-codes-table"></tbody>
+                </table>
+              </article>
+            </div>
           </section>
         </section>
 
