@@ -6,7 +6,7 @@ const API_BASE = (() => {
     return `${window.location.protocol}//${window.location.hostname}:8765`;
   }
   if (window.location.hostname === "getspeakout.com" || window.location.hostname.endsWith(".getspeakout.com")) {
-    return "https://api.getspeakout.com";
+    return "https://speakout-production.up.railway.app";
   }
   return `${window.location.protocol}//api.${window.location.hostname}`;
 })();

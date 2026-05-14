@@ -14,7 +14,13 @@ from urllib.request import Request, urlopen
 
 
 ROOT = Path(__file__).resolve().parent
-DATA_DIR = ROOT / "data"
+DEFAULT_DATA_DIR = ROOT / "data"
+if os.getenv("APP_DATA_DIR"):
+    DATA_DIR = Path(os.getenv("APP_DATA_DIR", "")).expanduser()
+elif os.getenv("RAILWAY_ENVIRONMENT"):
+    DATA_DIR = Path(os.getenv("RAILWAY_VOLUME_MOUNT_PATH", "/tmp/speakout-data")).expanduser()
+else:
+    DATA_DIR = DEFAULT_DATA_DIR
 DB_PATH = DATA_DIR / "express_master.db"
 CONFIG_PATH = ROOT / "runtime_config.json"
 HOST = os.getenv("HOST", "0.0.0.0")
@@ -1368,15 +1374,17 @@ class AppHandler(BaseHTTPRequestHandler):
         self._send(200, {"code": 0, "message": "ok", "data": None})
 
     def do_GET(self):
-        conn = db()
         parsed = urlparse(self.path)
         path = parsed.path
+        if path == "/health":
+            self.ok({"status": "ok"})
+            return
+
+        conn = db()
         try:
             client_id = self.headers.get("X-Client-Id", "legacy-demo-user")
             current_user = resolve_user(conn, client_id)
-            if path == "/health":
-                self.ok({"status": "ok"})
-            elif path == "/api/user/home-summary":
+            if path == "/api/user/home-summary":
                 self.ok(home_summary(conn, current_user["id"]))
             elif path == "/api/user/profile":
                 self.ok(profile_state(conn, current_user["id"]))
