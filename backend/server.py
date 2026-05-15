@@ -29,23 +29,106 @@ PORT = int(os.getenv("PORT", "8765"))
 WORD_DECKS = [
     {
         "id": "deck-a",
+        "title": "自我与成长",
         "cards": [
-            "自由", "束缚", "谎言", "成长", "安全感", "孤独", "欲望", "秩序",
-            "体面", "野心", "痛苦", "亲密", "稳定", "选择", "焦虑", "边界"
+            "自由", "独立", "成长", "自洽", "自律", "自尊", "自信", "勇气",
+            "选择", "边界", "潜力", "野心", "意义", "身份", "主体性", "松弛感"
         ],
     },
     {
         "id": "deck-b",
+        "title": "情绪与心理",
         "cards": [
-            "公平", "偏见", "效率", "善良", "责任", "天赋", "代价", "服从",
-            "尊严", "控制", "信任", "脆弱", "嫉妒", "共情", "失败", "原谅"
+            "焦虑", "内耗", "羞耻", "脆弱", "孤独", "痛苦", "恐惧", "愤怒",
+            "悲伤", "不安", "压抑", "疲惫", "迟疑", "敏感", "韧性", "失控"
         ],
     },
     {
         "id": "deck-c",
+        "title": "亲密关系",
         "cards": [
-            "原生家庭", "自律", "自由意志", "比较", "内耗", "爱情", "婚姻", "工作",
-            "意义", "身份", "标签", "羞耻", "愤怒", "妥协", "冒险", "现实"
+            "爱情", "亲密", "信任", "陪伴", "安全感", "依赖", "吸引", "疏离",
+            "控制", "嫉妒", "承诺", "界限", "体谅", "沟通", "冷战", "分手"
+        ],
+    },
+    {
+        "id": "deck-d",
+        "title": "家庭与代际",
+        "cards": [
+            "原生家庭", "父母", "孝顺", "亏欠", "期待", "规训", "偏爱", "比较",
+            "牺牲", "溺爱", "代沟", "服从", "认可", "缺席", "投射", "窒息"
+        ],
+    },
+    {
+        "id": "deck-e",
+        "title": "职场与组织",
+        "cards": [
+            "工作", "效率", "稳定", "跳槽", "管理", "升职", "加班", "内卷",
+            "竞争", "汇报", "权力", "倦怠", "天花板", "试错", "绩效", "协作"
+        ],
+    },
+    {
+        "id": "deck-f",
+        "title": "女性与性别",
+        "cards": [
+            "女性主义", "婚育", "母职", "悦己", "容貌焦虑", "生育成本", "性别偏见", "玻璃天花板",
+            "彩礼", "贤妻良母", "照顾劳动", "身体自主", "月经羞耻", "姐妹情谊", "大女主", "服美役"
+        ],
+    },
+    {
+        "id": "deck-g",
+        "title": "消费与金钱",
+        "cards": [
+            "消费主义", "理财", "贫穷", "欲望", "体面", "奢侈", "节俭", "分期",
+            "负债", "存款", "投资", "机会成本", "性价比", "及时行乐", "溢价", "消费降级"
+        ],
+    },
+    {
+        "id": "deck-h",
+        "title": "社交与边界",
+        "cards": [
+            "社交", "面子", "人情世故", "拒绝", "讨好", "真诚", "搭子", "社恐",
+            "连接", "共鸣", "礼貌", "自我暴露", "边界感", "轻社交", "断联", "情绪价值"
+        ],
+    },
+    {
+        "id": "deck-i",
+        "title": "社会与价值",
+        "cards": [
+            "公平", "偏见", "秩序", "规则", "资格", "特权", "正义", "惩罚",
+            "控诉", "共识", "冲突", "责任", "阶层", "资源", "规矩", "话语权"
+        ],
+    },
+    {
+        "id": "deck-j",
+        "title": "表达与说服",
+        "cards": [
+            "说服", "观点", "立场", "反驳", "证据", "叙事", "想象力", "逻辑",
+            "例子", "语言", "真实感", "节奏", "张力", "判断", "解释", "共情"
+        ],
+    },
+    {
+        "id": "deck-k",
+        "title": "时代与选择",
+        "cards": [
+            "城市", "漂泊", "安稳", "冒险", "机会", "迁移", "归属", "房子",
+            "租房", "买房", "养老", "延迟退休", "灵活就业", "副业", "失业", "自由职业"
+        ],
+    },
+    {
+        "id": "deck-l",
+        "title": "互联网与身份",
+        "cards": [
+            "流量", "算法", "标签", "人设", "赛博社交", "曝光", "比较心", "关注度",
+            "评价体系", "自媒体", "乙游", "虚拟亲密", "饭圈", "上头", "直播间", "私域"
+        ],
+    },
+    {
+        "id": "deck-m",
+        "title": "修复与成熟",
+        "cards": [
+            "原谅", "妥协", "宽容", "接纳", "改变", "修复", "觉察", "复盘",
+            "沉默", "逃避", "坦诚", "尊严", "同理心", "自我接纳", "稳定感", "信念"
         ],
     },
 ]
@@ -1141,12 +1224,38 @@ def admin_orders(conn):
 
 def admin_words(conn):
     rows = conn.execute(
-        "SELECT word, status, used_count FROM words ORDER BY used_count DESC, position_index ASC LIMIT 12"
+        "SELECT deck_id, word, status, used_count, position_index FROM words ORDER BY deck_id ASC, position_index ASC"
     ).fetchall()
-    return [
-        {"word": row["word"], "status": "已发布" if row["status"] == "published" else "待审核", "usedCount": row["used_count"]}
-        for row in rows
-    ]
+    deck_meta = {deck["id"]: deck.get("title", deck["id"]) for deck in WORD_DECKS}
+    deck_groups = []
+    current_deck_id = None
+    current_group = None
+
+    for row in rows:
+        if row["deck_id"] != current_deck_id:
+            current_deck_id = row["deck_id"]
+            current_group = {
+                "deckId": row["deck_id"],
+                "title": deck_meta.get(row["deck_id"], row["deck_id"]),
+                "count": 0,
+                "words": [],
+            }
+            deck_groups.append(current_group)
+
+        current_group["words"].append(
+            {
+                "word": row["word"],
+                "status": "已发布" if row["status"] == "published" else "待审核",
+                "usedCount": row["used_count"],
+            }
+        )
+        current_group["count"] += 1
+
+    return {
+        "totalWords": len(rows),
+        "deckCount": len(deck_groups),
+        "decks": deck_groups,
+    }
 
 
 def admin_prompts(conn):

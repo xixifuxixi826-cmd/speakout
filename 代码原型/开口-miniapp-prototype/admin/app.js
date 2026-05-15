@@ -1,4 +1,15 @@
-const BASE_URL = "http://127.0.0.1:8765";
+function resolveBaseUrl() {
+  const host = window.location.hostname;
+  if (host === "getspeakout.com" || host.endsWith(".getspeakout.com")) {
+    return "https://imaginative-love-production.up.railway.app";
+  }
+  if (host === "127.0.0.1" || host === "localhost") {
+    return "http://127.0.0.1:8765";
+  }
+  return "https://imaginative-love-production.up.railway.app";
+}
+
+const BASE_URL = resolveBaseUrl();
 
 function qs(selector) {
   return document.querySelector(selector);
@@ -123,15 +134,29 @@ function renderRedeemCodes(codes) {
 }
 
 function renderWords(words) {
-  qs("#words-grid").innerHTML = words
+  qs("#words-summary").textContent = `当前词库共 ${words.totalWords} 个词，分成 ${words.deckCount} 组，每轮随机使用其中 16 个。`;
+
+  qs("#words-grid").innerHTML = words.decks
     .map(
-      (item) => `
-        <article class="word-card">
-          <span class="tag">议题词</span>
-          <h3>${item.word}</h3>
-          <p>状态：${item.status}</p>
-          <p>最近使用：${item.usedCount} 次</p>
-        </article>
+      (deck) => `
+        <section class="word-deck">
+          <div class="word-deck__head">
+            <h3>${deck.title}</h3>
+            <span>${deck.count} 词</span>
+          </div>
+          <div class="word-chip-list">
+            ${deck.words
+              .map(
+                (item) => `
+                  <span class="word-chip" title="最近使用 ${item.usedCount} 次">
+                    <strong>${item.word}</strong>
+                    <em>${item.usedCount}</em>
+                  </span>
+                `
+              )
+              .join("")}
+          </div>
+        </section>
       `
     )
     .join("");
@@ -153,7 +178,6 @@ function renderPromptSummary(prompts) {
         <p class="prompt-card__eyebrow">当前生效版本</p>
         <h3>${prompt.promptName}</h3>
       </div>
-      <span class="tag">v${prompt.versionNo} 已发布</span>
     </div>
     <div class="prompt-meta">
       <span>Prompt Key：${prompt.promptKey}</span>
@@ -165,7 +189,6 @@ function renderPromptSummary(prompts) {
     </div>
     <div class="prompt-actions">
       <button class="primary-button" type="button" id="save-prompt-shortcut">保存当前版本为新版本</button>
-      <button class="ghost-button" type="button">当前已直接走真实模型试跑</button>
     </div>
   `;
 
@@ -312,7 +335,7 @@ async function bootstrap() {
     console.error(error);
     document.body.insertAdjacentHTML(
       "afterbegin",
-      `<div class="admin-error">后台数据加载失败，请先启动本地服务：python3 /Users/lisa888/Documents/表达高手/backend/server.py</div>`
+      `<div class="admin-error">后台数据加载失败，请刷新重试；如果你在本地开发环境打开后台，再启动本地服务：python3 /Users/lisa888/Documents/表达高手/backend/server.py</div>`
     );
   }
 }
