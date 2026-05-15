@@ -237,6 +237,14 @@ th {
   font-size: 17px;
 }
 
+.word-deck__flag {
+  margin-left: 8px;
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
 .word-deck__head span {
   color: var(--muted);
   font-size: 13px;

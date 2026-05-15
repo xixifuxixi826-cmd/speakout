@@ -30,6 +30,7 @@ WORD_DECKS = [
     {
         "id": "deck-a",
         "title": "自我与成长",
+        "starter": True,
         "cards": [
             "自由", "独立", "成长", "自洽", "自律", "自尊", "自信", "勇气",
             "选择", "边界", "潜力", "野心", "意义", "身份", "主体性", "松弛感"
@@ -38,6 +39,7 @@ WORD_DECKS = [
     {
         "id": "deck-b",
         "title": "情绪与心理",
+        "starter": True,
         "cards": [
             "焦虑", "内耗", "羞耻", "脆弱", "孤独", "痛苦", "恐惧", "愤怒",
             "悲伤", "不安", "压抑", "疲惫", "迟疑", "敏感", "韧性", "失控"
@@ -46,6 +48,7 @@ WORD_DECKS = [
     {
         "id": "deck-c",
         "title": "亲密关系",
+        "starter": True,
         "cards": [
             "爱情", "亲密", "信任", "陪伴", "安全感", "依赖", "吸引", "疏离",
             "控制", "嫉妒", "承诺", "界限", "体谅", "沟通", "冷战", "分手"
@@ -62,6 +65,7 @@ WORD_DECKS = [
     {
         "id": "deck-e",
         "title": "职场与组织",
+        "starter": True,
         "cards": [
             "工作", "效率", "稳定", "跳槽", "管理", "升职", "加班", "内卷",
             "竞争", "汇报", "权力", "倦怠", "天花板", "试错", "绩效", "协作"
@@ -1226,7 +1230,13 @@ def admin_words(conn):
     rows = conn.execute(
         "SELECT deck_id, word, status, used_count, position_index FROM words ORDER BY deck_id ASC, position_index ASC"
     ).fetchall()
-    deck_meta = {deck["id"]: deck.get("title", deck["id"]) for deck in WORD_DECKS}
+    deck_meta = {
+        deck["id"]: {
+            "title": deck.get("title", deck["id"]),
+            "starter": bool(deck.get("starter")),
+        }
+        for deck in WORD_DECKS
+    }
     deck_groups = []
     current_deck_id = None
     current_group = None
@@ -1236,7 +1246,8 @@ def admin_words(conn):
             current_deck_id = row["deck_id"]
             current_group = {
                 "deckId": row["deck_id"],
-                "title": deck_meta.get(row["deck_id"], row["deck_id"]),
+                "title": deck_meta.get(row["deck_id"], {}).get("title", row["deck_id"]),
+                "starter": deck_meta.get(row["deck_id"], {}).get("starter", False),
                 "count": 0,
                 "words": [],
             }
@@ -1254,6 +1265,8 @@ def admin_words(conn):
     return {
         "totalWords": len(rows),
         "deckCount": len(deck_groups),
+        "starterWords": sum(group["count"] for group in deck_groups if group["starter"]),
+        "starterDeckCount": sum(1 for group in deck_groups if group["starter"]),
         "decks": deck_groups,
     }
 

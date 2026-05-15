@@ -134,14 +134,14 @@ function renderRedeemCodes(codes) {
 }
 
 function renderWords(words) {
-  qs("#words-summary").textContent = `当前词库共 ${words.totalWords} 个词，分成 ${words.deckCount} 组，每轮随机使用其中 16 个。`;
+  qs("#words-summary").textContent = `当前词库共 ${words.totalWords} 个词，分成 ${words.deckCount} 组。其中首批优先训练词 ${words.starterWords} 个，分成 ${words.starterDeckCount} 组。每轮随机使用其中 16 个。`;
 
   qs("#words-grid").innerHTML = words.decks
     .map(
       (deck) => `
         <section class="word-deck">
           <div class="word-deck__head">
-            <h3>${deck.title}</h3>
+            <h3>${deck.title}${deck.starter ? '<em class="word-deck__flag">优先</em>' : ""}</h3>
             <span>${deck.count} 词</span>
           </div>
           <div class="word-chip-list">
