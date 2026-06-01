@@ -803,6 +803,26 @@ def read_runtime_config_from_db():
     return config
 
 
+def read_payment_config_from_db():
+    if not DB_PATH.exists():
+        return {}
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            "SELECT config_key, config_value FROM app_config WHERE config_key LIKE 'payment.%'"
+        ).fetchall()
+        conn.close()
+    except sqlite3.Error:
+        return {}
+
+    config = {}
+    for row in rows:
+        key = row["config_key"].replace("payment.", "", 1)
+        config[key] = row["config_value"]
+    return config
+
+
 def load_runtime_config():
     file_config = read_runtime_config_file()
     db_config = read_runtime_config_from_db()
@@ -900,11 +920,18 @@ def training_flip_limit_config(conn):
 
 def load_payment_demo_config():
     file_config = read_runtime_config_file()
+    db_config = read_payment_config_from_db()
     return {
-        "pid": os.getenv("ZPAY_PID", file_config.get("zpay_pid", "")),
-        "key": os.getenv("ZPAY_KEY", file_config.get("zpay_key", "")),
-        "submit_url": os.getenv("ZPAY_SUBMIT_URL", file_config.get("zpay_submit_url", "https://zpayz.cn/submit.php")),
-        "order_query_url": os.getenv("ZPAY_ORDER_QUERY_URL", file_config.get("zpay_order_query_url", "https://zpayz.cn/api.php")),
+        "pid": os.getenv("ZPAY_PID", db_config.get("zpay_pid", file_config.get("zpay_pid", ""))),
+        "key": os.getenv("ZPAY_KEY", db_config.get("zpay_key", file_config.get("zpay_key", ""))),
+        "submit_url": os.getenv(
+            "ZPAY_SUBMIT_URL",
+            db_config.get("zpay_submit_url", file_config.get("zpay_submit_url", "https://zpayz.cn/submit.php")),
+        ),
+        "order_query_url": os.getenv(
+            "ZPAY_ORDER_QUERY_URL",
+            db_config.get("zpay_order_query_url", file_config.get("zpay_order_query_url", "https://zpayz.cn/api.php")),
+        ),
     }
 
 
@@ -5257,6 +5284,27 @@ def update_runtime_config(conn, body):
         """,
         (model_api_model, model_provider_code, now_text()),
     )
+    payment_updates = []
+    payment_field_map = {
+        "zpayPid": "payment.zpay_pid",
+        "zpayKey": "payment.zpay_key",
+        "zpaySubmitUrl": "payment.zpay_submit_url",
+        "zpayOrderQueryUrl": "payment.zpay_order_query_url",
+    }
+    for body_key, config_key in payment_field_map.items():
+        if body_key in body:
+            payment_updates.append((config_key, str(body.get(body_key) or "").strip(), now_text()))
+    if payment_updates:
+        conn.executemany(
+            """
+            INSERT INTO app_config (config_key, config_value, updated_at)
+            VALUES (?, ?, ?)
+            ON CONFLICT(config_key) DO UPDATE SET
+              config_value = excluded.config_value,
+              updated_at = excluded.updated_at
+            """,
+            payment_updates,
+        )
     conn.commit()
     return admin_runtime_config()
 
