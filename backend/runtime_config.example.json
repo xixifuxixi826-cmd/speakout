@@ -3,5 +3,9 @@
   "model_api_key": "YOUR_API_KEY",
   "model_api_model": "gpt-4o",
   "model_provider_code": "your-provider",
-  "require_real_ai": true
+  "require_real_ai": true,
+  "zpay_pid": "YOUR_ZPAY_PID",
+  "zpay_key": "YOUR_ZPAY_KEY",
+  "zpay_submit_url": "https://zpayz.cn/submit.php",
+  "zpay_order_query_url": "https://zpayz.cn/api.php"
 }
