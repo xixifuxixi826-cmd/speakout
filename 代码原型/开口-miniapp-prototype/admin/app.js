@@ -418,43 +418,6 @@ function renderTrainingHistory(records) {
   });
 }
 
-function renderRedeemCodes(codes) {
-  qs("#redeem-codes-table").innerHTML = codes
-    .map(
-      (item) => `
-        <tr>
-          <td>${item.code}</td>
-          <td>${item.planName}</td>
-          <td>${item.status}</td>
-          <td>${item.usedBy}</td>
-          <td>${item.usedAt}</td>
-          <td>
-            ${item.status === "active" ? `<button class="ghost-button redeem-toggle" data-code="${item.code}" data-status="inactive">停用</button>` : ""}
-            ${item.status === "inactive" ? `<button class="ghost-button redeem-toggle" data-code="${item.code}" data-status="active">恢复</button>` : ""}
-          </td>
-        </tr>
-      `
-    )
-    .join("");
-
-  qsa(".redeem-toggle").forEach((button) => {
-    button.addEventListener("click", async () => {
-      try {
-        await getJson("/admin-api/redeem-codes/status", {
-          method: "POST",
-          body: JSON.stringify({
-            code: button.dataset.code,
-            status: button.dataset.status
-          })
-        });
-        await refreshRedeemCodes();
-      } catch (error) {
-        qs("#redeem-generate-result").textContent = `状态更新失败：${error.message}`;
-      }
-    });
-  });
-}
-
 function renderWords(words) {
   qs("#words-summary").textContent = `当前 C 端实际使用“新手混合抽词池”：${words.activeBeginnerWords || 0} 个词，分成 ${words.activeBeginnerDeckCount || 0} 类；旧主题词库保留 ${words.totalWords} 个词，暂不作为主抽取逻辑。每轮会从新手池混合抽 16 张。`;
 
@@ -1055,27 +1018,6 @@ async function setExpireAt() {
   qs("#grant-result").textContent = `到期时间已设置为 ${qs("#expire-date").value} 23:59:59。这个用户从次日 00:00:00 起不可再提交点评。`;
 }
 
-async function refreshRedeemCodes() {
-  if (!qs("#redeem-codes-table")) return;
-  const codes = await getJson("/admin-api/redeem-codes");
-  renderRedeemCodes(codes);
-}
-
-async function generateRedeemCodes() {
-  if (!qs("#redeem-generate-quantity")) return;
-  const result = await getJson("/admin-api/redeem-codes/generate", {
-    method: "POST",
-    body: JSON.stringify({
-      quantity: Number(qs("#redeem-generate-quantity").value || 10),
-      prefix: qs("#redeem-generate-prefix").value.trim(),
-      planName: qs("#redeem-generate-plan").value.trim()
-    })
-  });
-
-  qs("#redeem-generate-result").textContent = result.codes.map((item) => item.code).join("\n");
-  renderRedeemCodes([...(result.codes || []), ...((await getJson("/admin-api/redeem-codes")).filter((item) => !result.codes.some((created) => created.code === item.code)))]);
-}
-
 async function createQuote() {
   const quotes = await getJson("/admin-api/content/quotes/create", {
     method: "POST",
@@ -1324,14 +1266,6 @@ qs("#set-expire-at").addEventListener("click", () => {
     qs("#grant-result").textContent = `设置到期时间失败：${error.message}`;
   });
 });
-
-if (qs("#generate-redeem-codes")) {
-  qs("#generate-redeem-codes").addEventListener("click", () => {
-    generateRedeemCodes().catch((error) => {
-      qs("#redeem-generate-result").textContent = `生成失败：${error.message}`;
-    });
-  });
-}
 
 qs("#create-quote").addEventListener("click", () => {
   createQuote().catch((error) => {
