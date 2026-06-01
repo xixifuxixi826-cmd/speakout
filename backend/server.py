@@ -2932,13 +2932,14 @@ def finish_current_feedback(conn, user_id, auth_token=""):
 
 
 def submit_training(conn, user_id, transcript_text, submitted_words=None, auth_token=""):
-    access_status, payment_membership = training_access_status(conn, auth_token, user_id)
-    if access_status != "active":
-        raise ValueError("当前训练权益不可用，请先开通或续费")
-
     session_row = fetch_active_session(conn, user_id)
     if not session_row:
         raise ValueError("当前没有进行中的训练")
+
+    previous_attempts = coaching_attempts(conn, session_row["id"])
+    access_status, payment_membership = training_access_status(conn, auth_token, user_id)
+    if access_status != "active" and not previous_attempts:
+        raise ValueError("当前训练权益不可用，请先开通或续费")
 
     selected_ids = json_loads(session_row["selected_json"], [])
     if len(selected_ids) != 2:
@@ -2985,7 +2986,6 @@ def submit_training(conn, user_id, transcript_text, submitted_words=None, auth_t
                 session_row = fetch_active_session(conn, user_id)
         if len(selected_ids) != 2:
             raise ValueError("当前必须先选中两张卡片")
-    previous_attempts = coaching_attempts(conn, session_row["id"])
     attempt_no = len(previous_attempts) + 1
     selected_cards_for_event = [
         {"word": word}
@@ -3012,7 +3012,11 @@ def submit_training(conn, user_id, transcript_text, submitted_words=None, auth_t
         metadata={"attemptNo": attempt_no, "source": "submit_training"},
         event_key=f"coach_feedback_success:{session_row['id']}",
     )
-    remaining_after_consume = consume_training_credit(conn, user_id)
+    if attempt_no == 1:
+        remaining_after_consume = consume_training_credit(conn, user_id)
+    else:
+        latest_access_status, latest_membership = training_access_status(conn, auth_token, user_id)
+        remaining_after_consume = latest_membership["remaining_groups"] if latest_membership else 0
     feedback["remainingCredits"] = remaining_after_consume
 
     conn.execute(
