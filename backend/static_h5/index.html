@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <title>Speak Out</title>
+    <link rel="stylesheet" href="/styles.css?v=20260601-free-expression-payfix" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand-block">
+          <span class="brand-kicker">SPEAK OUT</span>
+          <h1>表达高手</h1>
+        </div>
+        <button class="mode-pill" id="mode-pill"></button>
+      </header>
+
+      <main id="app"></main>
+
+      <nav class="bottom-bar">
+        <button class="bottom-link is-active" data-tab="train">
+          <span class="bottom-ico" aria-hidden="true">
+            <img class="tab-icon tab-icon-default" src="/assets/visual/bottom-tab-elements/home.webp" alt="" />
+            <img class="tab-icon tab-icon-active" src="/assets/visual/bottom-tab-elements/home-active.webp" alt="" />
+          </span>
+          <span>训练</span>
+        </button>
+        <button class="bottom-link" data-tab="history">
+          <span class="bottom-ico" aria-hidden="true">
+            <img class="tab-icon tab-icon-default" src="/assets/visual/bottom-tab-elements/history.webp" alt="" />
+            <img class="tab-icon tab-icon-active" src="/assets/visual/bottom-tab-elements/history-active.webp" alt="" />
+          </span>
+          <span>记录</span>
+        </button>
+        <button class="bottom-link" data-tab="profile">
+          <span class="bottom-ico" aria-hidden="true">
+            <img class="tab-icon tab-icon-default" src="/assets/visual/bottom-tab-elements/profile.webp" alt="" />
+            <img class="tab-icon tab-icon-active" src="/assets/visual/bottom-tab-elements/profile-active.webp" alt="" />
+          </span>
+          <span>我的</span>
+        </button>
+      </nav>
+    </div>
+
+    <template id="landing-template">
+      <section class="screen screen-landing">
+        <article class="dream-home">
+          <span class="home-flow-layer" aria-hidden="true"></span>
+          <span class="home-light-ribbon" aria-hidden="true"></span>
+          <div class="home-float-art" aria-hidden="true">
+            <div class="home-orbit"></div>
+            <div class="home-voice-card">
+              <svg viewBox="0 0 64 36" aria-hidden="true">
+                <rect x="7" y="13" width="6" height="13" rx="3" fill="white" opacity=".95" />
+                <rect x="20" y="8" width="6" height="20" rx="3" fill="white" opacity=".95" />
+                <rect x="33" y="12" width="6" height="14" rx="3" fill="white" opacity=".95" />
+                <rect x="46" y="6" width="6" height="22" rx="3" fill="white" opacity=".95" />
+                <path d="M57 20h1" stroke="white" stroke-width="4" stroke-linecap="round" opacity=".85" />
+              </svg>
+            </div>
+            <div class="home-smile-card">
+              <svg viewBox="0 0 48 48" aria-hidden="true">
+                <defs>
+                  <linearGradient id="homeSmileGradient" x1="0" x2="1" y1="0" y2="1">
+                    <stop stop-color="#ff9fbd" />
+                    <stop offset="1" stop-color="#ffb46d" />
+                  </linearGradient>
+                </defs>
+                <circle cx="24" cy="24" r="18" fill="url(#homeSmileGradient)" opacity=".88" />
+                <path d="M15.5 21c1.7-2.4 4-3.6 6.8-3.2 3.8.5 5.1 3.9 8.7 3.5 1.7-.2 3.1-1 4.2-2.3" stroke="white" stroke-width="3.4" stroke-linecap="round" fill="none" />
+                <circle cx="18" cy="29" r="2.2" fill="white" opacity=".9" />
+                <circle cx="31" cy="30" r="2.2" fill="white" opacity=".9" />
+              </svg>
+            </div>
+          </div>
+
+          <div class="dream-copy">
+            <span class="brand-kicker">SPEAK OUT</span>
+            <h2>表达高手</h2>
+            <p class="dream-lead">随便两个词，<br />你都能讲出自己的看法。</p>
+            <p class="dream-quote">语言的边界，也是思维的边界</p>
+          </div>
+
+          <div class="dream-clouds" aria-hidden="true">
+            <span class="mist mist-a"></span>
+            <span class="mist mist-b"></span>
+            <span class="mist mist-c"></span>
+          </div>
+
+          <article class="daily-thought-panel">
+            <div class="thought-header">
+              <button class="refresh-quote-btn" id="refresh-daily-quote" type="button" aria-label="换一句">
+                <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.35-5.65"/><path d="M20 4v6h-6"/></svg>
+                <span>换一句</span>
+              </button>
+            </div>
+            <div class="glass-quote-card">
+              <div class="glass-quote-content">
+                <p id="daily-quote-text">语言的边界，也是思维的边界。</p>
+                <div class="daily-meta">
+                  <span id="daily-quote-author">来自 维特根斯坦</span>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <div class="dream-landscape" aria-hidden="true">
+            <span class="star star-a"></span>
+            <span class="star star-b"></span>
+            <span class="star star-c"></span>
+          </div>
+
+          <button class="primary-btn dream-cta" id="start-training">
+            <span class="dream-cta-mic" aria-hidden="true">
+              <svg viewBox="0 0 48 48">
+                <rect x="18" y="5" width="12" height="22" rx="6" fill="white" />
+                <path d="M11 22c0 7.2 5.5 13 13 13s13-5.8 13-13" stroke="white" stroke-width="4" stroke-linecap="round" fill="none" />
+                <path d="M24 35v7M16 42h16" stroke="white" stroke-width="4" stroke-linecap="round" fill="none" />
+              </svg>
+            </span>
+            <span class="dream-cta-text">我试着说一段话<small>2 分钟说出你的观点</small></span>
+          </button>
+        </article>
+
+        <div class="hero-stats sr-home-stats" id="hero-stats"></div>
+
+        <article class="soft-panel home-guide-panel">
+          <div class="panel-title-row">
+            <h3>怎么玩</h3>
+          </div>
+          <div class="guide-list">
+            <div class="guide-item">
+              <span>01</span>
+              <p>翻开词卡，选 2 张最有张力的词。</p>
+            </div>
+            <div class="guide-item">
+              <span>02</span>
+              <p>用 “A 是 B” 或 “A 是一种 B” 先立一句判断。</p>
+            </div>
+            <div class="guide-item">
+              <span>03</span>
+              <p>2 分钟构思，2 分钟表达，然后交给教练点评。</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="soft-panel" id="latest-card"></article>
+      </section>
+    </template>
+
+    <template id="training-template">
+      <section class="screen flow-phone-screen training-flow-screen">
+        <article class="training-header nav-row">
+          <button class="back ghost-back" id="training-back" type="button" aria-label="返回">‹</button>
+          <div class="training-header-copy">
+            <span class="eyebrow" id="round-label"></span>
+            <h2>选两个词</h2>
+          </div>
+          <span></span>
+        </article>
+
+        <p class="ghost-note choose-note">点击卡片，选择你想组合的两个词</p>
+        <section class="training-selected-line">
+          <div class="selected-row" id="selected-row"></div>
+          <button class="secondary-btn batch-refresh-btn" id="refresh-batch" type="button">换一批</button>
+        </section>
+
+        <section class="matrix-grid" id="matrix-grid"></section>
+
+        <button class="primary-btn" id="proceed-training">进入 2 分钟构思</button>
+
+        <article class="soft-panel compact-panel training-tip-panel">
+          <p>先试试：A 是 B / A 是一种 B；<br />也可以试试：因为 A 所以 B、A 背后藏着 B；<br />当然，如果有别的句式，也大胆用。<br />把两个看起来无关的词强行连起来，本身就是一次思维练习。</p>
+        </article>
+      </section>
+    </template>
+
+    <template id="thinking-template">
+      <section class="screen flow-phone-screen thinking-flow-screen">
+        <div class="nav-row thinking-nav">
+          <button class="back ghost-back" id="thinking-back" type="button" aria-label="返回">‹</button>
+          <div>
+            <span class="eyebrow">构思阶段</span>
+            <h2>2 分钟，构思一段话</h2>
+          </div>
+          <span></span>
+        </div>
+        <p class="ghost-note">先想清你的想法，再把它组织成一段完整的话。</p>
+
+        <article class="thinking-panel">
+          <div class="timer-ring"><span id="thinking-clock">02:00</span></div>
+          <div class="selected-row selected-row--center" id="thinking-words"></div>
+        </article>
+
+        <article class="soft-panel thinking-method-panel">
+          <div class="method-card">
+            <strong>这句话在哪种情况下会成立？</strong>
+            <p>不要先讲大道理，先想它在什么具体处境里才会真的说得通。</p>
+          </div>
+          <div class="method-card">
+            <strong>哪种人群最可能经历这种感受？</strong>
+            <p>先锁定一个人，不要同时讲很多类人。谁最容易被这个问题刺到，就先讲谁。</p>
+          </div>
+          <div class="method-card">
+            <strong>你、朋友，或社会上有没有类似的例子？</strong>
+            <p>优先用你真的见过、听过、经历过的材料。一个具体人、一个具体时刻，比很多抽象判断更有力。</p>
+          </div>
+        </article>
+
+        <button class="primary-btn" id="skip-thinking">直接开始表达</button>
+      </section>
+    </template>
+
+    <template id="speaking-template">
+      <section class="screen speaking-stage">
+        <section class="speaking-topline">
+          <button class="speaking-back" id="speaking-back" aria-label="返回">‹</button>
+          <span class="eyebrow">表达阶段</span>
+        </section>
+
+        <article class="speaking-advice-card">
+          <div class="speaking-advice-title">先讲一个点就够了。</div>
+          <div class="speaking-advice-text">
+            先说你到底想证明什么，再讲一个具体的人、一个具体时刻，最好带一句真实对话。
+          </div>
+        </article>
+
+        <article class="speaking-transcript-card">
+          <div class="speaking-transcript-top">
+            <div class="selected-row selected-row--center speaking-words-row" id="speaking-words"></div>
+            <div class="clock-pill clock-pill--inline speaking-timer" id="speaking-clock">02:00</div>
+          </div>
+
+          <textarea
+            id="transcript-input"
+            placeholder="点这里，直接用手机键盘的语音转文字输入"
+          ></textarea>
+
+          <div class="voice-field" aria-hidden="true">
+            <svg class="voice-visual" viewBox="0 0 360 118" preserveAspectRatio="xMidYMid meet">
+              <defs>
+                <linearGradient id="rippleA" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="#d9ddff" stop-opacity="0" />
+                  <stop offset="34%" stop-color="#aaa5ff" stop-opacity="0.52" />
+                  <stop offset="68%" stop-color="#ffd0e3" stop-opacity="0.32" />
+                  <stop offset="100%" stop-color="#d9ddff" stop-opacity="0" />
+                </linearGradient>
+                <linearGradient id="rippleB" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="#cfe4ff" stop-opacity="0" />
+                  <stop offset="46%" stop-color="#b8b5ff" stop-opacity="0.36" />
+                  <stop offset="100%" stop-color="#ffc9df" stop-opacity="0" />
+                </linearGradient>
+                <filter id="tinyBlur"><feGaussianBlur stdDeviation="0.45" /></filter>
+                <filter id="orbBlur"><feGaussianBlur stdDeviation="6" /></filter>
+              </defs>
+              <path class="water-fill" fill="url(#rippleA)" d="M-12 88 C 42 82, 76 94, 126 86 S 214 79, 270 88 S 330 96, 374 82 L374 110 L-12 110 Z" />
+              <path class="water-ripple r1" stroke="url(#rippleA)" d="M22 83 C 55 77, 82 89, 118 84 S 178 77, 216 84 S 276 93, 330 82" />
+              <path class="water-ripple r2" stroke="url(#rippleB)" d="M44 92 C 76 87, 104 80, 138 90 S 194 100, 230 88 S 274 82, 316 91" />
+              <path class="water-ripple r3" stroke="#c7c5ff" d="M72 74 C 102 71, 126 81, 158 76 S 205 70, 238 78 S 270 85, 302 75" />
+              <path class="water-ripple r4" stroke="#ffd3e6" d="M66 101 C 100 96, 128 104, 160 99 S 212 92, 248 99 S 282 105, 318 96" />
+              <path class="water-ripple r5" stroke="#bfc8ff" d="M104 86 C 130 82, 154 91, 180 86 S 222 80, 252 87" />
+              <ellipse class="orb-glow" cx="180" cy="66" rx="38" ry="16" fill="#b7b2ff" filter="url(#orbBlur)" />
+              <circle class="orb-core" cx="180" cy="60" r="11" fill="#aaa5ff" opacity="0.78" />
+              <circle class="voice-dot d1" cx="32" cy="61" r="2.7" fill="#aaa5ff" />
+              <circle class="voice-dot d2" cx="68" cy="54" r="3.7" fill="#aaa5ff" />
+              <circle class="voice-dot d3" cx="100" cy="65" r="2.4" fill="#aaa5ff" />
+              <circle class="voice-dot d4" cx="132" cy="53" r="4.2" fill="#aaa5ff" />
+              <circle class="voice-dot d5" cx="230" cy="59" r="3.7" fill="#aaa5ff" />
+              <circle class="voice-dot d6" cx="288" cy="55" r="3.3" fill="#aaa5ff" />
+              <circle class="voice-dot d7" cx="332" cy="64" r="2.3" fill="#aaa5ff" />
+            </svg>
+          </div>
+        </article>
+
+        <section class="action-row speaking-actions">
+          <button class="secondary-btn" id="reset-record">清空重来</button>
+          <button class="primary-btn" id="submit-speaking">提交教练点评</button>
+        </section>
+
+        <article class="speaking-tip-card">
+          <div class="tip-title">✦ 表达小贴士</div>
+          <div class="tip-text">不要追求完美表达，先把想法流出来就好。</div>
+        </article>
+      </section>
+    </template>
+
+    <template id="analyzing-template">
+      <section class="screen coach-wait-screen">
+        <article class="coach-waiting-panel">
+          <section class="coach-fox-area">
+            <span class="coach-star coach-star-a">✦</span>
+            <span class="coach-star coach-star-b">✦</span>
+            <span class="coach-star coach-star-c">✦</span>
+            <div class="coach-fox-wrap">
+              <img class="coach-fox-img" src="/assets/visual/coach/fox-coach-analyzing-01.webp" alt="狐狸表达教练" />
+            </div>
+          </section>
+
+          <h2>教练正在分析你的表达...</h2>
+          <p id="analyzing-subtitle">教练会从多个维度，为你整理出这一轮最值得保留的观点和建议。</p>
+
+          <section class="coach-wait-progress" id="analyzing-status-list"></section>
+        </article>
+      </section>
+    </template>
+
+    <template id="feedback-template">
+      <section class="screen feedback-ref-screen">
+        <div class="feedback-ref-top">
+          <button class="feedback-ref-back" aria-label="返回">‹</button>
+          <div class="feedback-ref-head">
+            <div class="eyebrow">教练点评</div>
+            <div class="feedback-ref-title" id="feedback-title"></div>
+          </div>
+          <span></span>
+        </div>
+
+        <article class="ref-card ref-score-card">
+          <div class="ref-score-side">
+            <div class="ref-score-circle">
+              <div class="ref-score-number" id="feedback-score"></div>
+            <div class="ref-score-cap">满分 100</div>
+            </div>
+            <button class="ref-mini-link" id="open-feedback-evaluation" type="button">评分详情 ›</button>
+          </div>
+          <div class="ref-score-copy">
+            <p id="feedback-summary"></p>
+            <span id="feedback-model"></span>
+          </div>
+        </article>
+
+        <article class="ref-card ref-block ref-accordion" id="feedback-transcript"></article>
+        <article class="ref-card ref-block" id="feedback-suggestions"></article>
+
+        <div class="ref-btns">
+          <button class="ref-btn ghost" id="open-coach-demo" type="button">查看教练示范 ›</button>
+          <button class="ref-btn primary" id="continue-training">继续本组</button>
+          <button class="ref-btn secondary" id="retry-speaking">更换新词</button>
+        </div>
+        <p class="feedback-disclaimer">
+          本次点评由 AI 教练生成，用于表达训练参考。<br>请结合你的真实语境和判断灵活使用。
+        </p>
+      </section>
+    </template>
+
+    <template id="feedback-evaluation-template">
+      <section class="screen feedback-ref-screen">
+        <div class="feedback-ref-top">
+          <button class="feedback-ref-back" id="evaluation-back" aria-label="返回">‹</button>
+          <div class="feedback-ref-head">
+            <div class="eyebrow">多维评价</div>
+            <div class="feedback-ref-title" id="evaluation-title"></div>
+          </div>
+          <span></span>
+        </div>
+
+        <article class="ref-card ref-block" id="evaluation-radar"></article>
+        <article class="ref-card ref-block" id="evaluation-details"></article>
+      </section>
+    </template>
+
+    <template id="coach-demo-template">
+      <section class="screen feedback-ref-screen coach-demo-screen">
+        <div class="feedback-ref-top">
+          <button class="feedback-ref-back" id="coach-demo-back" aria-label="返回">‹</button>
+          <div class="feedback-ref-head">
+            <div class="eyebrow">教练示范</div>
+            <div class="feedback-ref-title" id="coach-demo-title"></div>
+          </div>
+          <span></span>
+        </div>
+
+        <article class="ref-card ref-quote-card" id="coach-demo-content"></article>
+        <button class="ref-btn primary" id="coach-demo-close">我知道了</button>
+      </section>
+    </template>
+
+    <template id="history-template">
+      <section class="screen records-ref-screen">
+        <div class="topbar ref-topbar records-topbar">
+          <button class="back" id="history-back" type="button">‹</button>
+          <div class="top-title">表达记录</div>
+          <div></div>
+        </div>
+        <article class="record-banner">
+          <div class="record-banner-title">每一次表达，都是更好的自己</div>
+          <div class="record-banner-sub">坚持练习，成长看得见</div>
+          <img class="record-banner-art" src="/assets/visual/other-elements/loglist-top-01.webp" alt="" />
+        </article>
+        <div id="history-list" class="history-list records-ref-list"></div>
+      </section>
+    </template>
+
+    <template id="auth-template">
+      <section class="screen auth-ref-screen">
+        <article class="auth-hero-ref">
+          <div class="brand">SPEAK OUT</div>
+          <h2 class="title-xl">表达高手</h2>
+          <p class="auth-slogan-ref">在这里，<br />你可以先自由地说。</p>
+          <div class="auth-bubbles-ref" aria-hidden="true">
+            <img src="/assets/visual/other-elements/login-01.webp" alt="" />
+          </div>
+        </article>
+
+        <article class="auth-card-ref">
+          <div class="tabs">
+            <button class="tab active auth-tab" data-auth-mode="register" type="button">注册</button>
+            <button class="tab auth-tab" data-auth-mode="login" type="button">登录</button>
+          </div>
+
+          <div class="field">
+            <p class="label">手机号</p>
+            <div class="input ref-input">
+              <span class="left auth-left-icon"><svg viewBox="0 0 24 24" fill="none"><rect x="7" y="3" width="10" height="18" rx="3" stroke-width="2.4"/><path d="M10.5 17.5h3" stroke-width="2.4" stroke-linecap="round"/></svg></span>
+              <input id="auth-phone" value="" placeholder="用于登录和绑定训练权益" autocomplete="tel" />
+              <span></span>
+            </div>
+          </div>
+
+          <div class="field">
+            <p class="label">密码</p>
+            <div class="input ref-input">
+              <span class="left auth-left-icon"><svg viewBox="0 0 24 24" fill="none"><rect x="5.5" y="10" width="13" height="10" rx="3" stroke-width="2.3"/><path d="M8.5 10V7.7a3.5 3.5 0 0 1 7 0V10" stroke-width="2.3" stroke-linecap="round"/></svg></span>
+              <input id="auth-password" value="" type="password" placeholder="至少 6 位" autocomplete="current-password" />
+              <button class="password-eye ref-eye" id="auth-password-eye" type="button" aria-label="显示密码"><svg viewBox="0 0 24 24" fill="none"><path d="M3 12s3.4-5.2 9-5.2S21 12 21 12s-3.4 5.2-9 5.2S3 12 3 12Z" stroke-width="2.2"/><path d="M4.5 4.5l15 15" stroke-width="2.2" stroke-linecap="round"/></svg></button>
+            </div>
+          </div>
+
+          <div class="field" id="auth-confirm-wrap">
+            <p class="label">确认密码</p>
+            <div class="input ref-input">
+              <span class="left auth-left-icon"><svg viewBox="0 0 24 24" fill="none"><rect x="5.5" y="10" width="13" height="10" rx="3" stroke-width="2.3"/><path d="M8.5 10V7.7a3.5 3.5 0 0 1 7 0V10" stroke-width="2.3" stroke-linecap="round"/></svg></span>
+              <input id="auth-confirm-password" value="" type="password" placeholder="再输入一次密码" autocomplete="new-password" />
+              <button class="password-eye ref-eye" id="auth-confirm-eye" type="button" aria-label="显示密码"><svg viewBox="0 0 24 24" fill="none"><path d="M3 12s3.4-5.2 9-5.2S21 12 21 12s-3.4 5.2-9 5.2S3 12 3 12Z" stroke-width="2.2"/><path d="M4.5 4.5l15 15" stroke-width="2.2" stroke-linecap="round"/></svg></button>
+            </div>
+          </div>
+
+          <div class="tip" id="auth-message">注册成功后，你会自动获得 1 次免费教练点评。</div>
+          <button class="btn" id="auth-submit">注册并开始训练</button>
+          <p class="auth-legal-note">
+            注册 / 登录即表示你已阅读并同意
+            <a id="agreement-link" href="/agreement.html">《用户协议与隐私政策》</a>
+          </p>
+        </article>
+      </section>
+    </template>
+
+    <template id="plans-template">
+      <section class="screen plan-ref-screen">
+        <div class="topbar ref-topbar">
+          <button class="back" id="plans-back" type="button">‹</button>
+          <div class="top-title">购买训练计划</div>
+          <div></div>
+        </div>
+        <div class="plan-hero">
+          <h2 class="plan-title"><span>把表达，</span><span>练成一种本能。</span></h2>
+          <p class="plan-sub">思维激活 · 系统练习 · 看见变化</p>
+        </div>
+
+        <div class="payment-recovery-strip" id="payment-recovery-strip" hidden>
+          <span>如果刚才已经完成支付，可以刷新一次状态。</span>
+          <button id="refresh-payment-status" type="button">刷新支付状态</button>
+        </div>
+
+        <section class="plans-stack" id="plans-stack"></section>
+
+        <div class="service-strip">
+          <div class="service-card"><img class="service-icon" src="/assets/visual/other-elements/buy-good-01.webp" alt="" />专业教练点评</div>
+          <div class="service-card"><img class="service-icon" src="/assets/visual/other-elements/buy-good-02.webp" alt="" />多维度评分</div>
+          <div class="service-card"><img class="service-icon" src="/assets/visual/other-elements/buy-good-03.webp" alt="" />记录可随时回看</div>
+        </div>
+      </section>
+    </template>
+
+    <template id="profile-template">
+      <section class="screen profile-ref-screen">
+        <div class="topbar ref-topbar profile-topbar">
+          <button class="back" id="profile-back" type="button">‹</button>
+          <div class="top-title">我的</div>
+          <div></div>
+        </div>
+        <article class="profile-ref-header">
+          <img class="profile-fox-ref" src="/assets/visual/other-elements/my-userhead-01.webp" alt="" />
+          <div class="profile-meta-ref">
+            <div class="profile-name" id="profile-phone"></div>
+            <div class="status" id="profile-status-text"></div>
+          </div>
+        </article>
+
+        <section class="growth card">
+          <div class="growth-title">当前权益</div>
+          <div class="stats">
+            <div class="stat">
+              <div class="stat-label">累计训练（次）</div>
+              <div class="num" id="profile-trained">0</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">剩余点评（次）</div>
+              <div class="num" id="profile-remaining">0</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">有效期至</div>
+              <div class="num profile-date-num" id="profile-expire">-</div>
+            </div>
+          </div>
+          <button class="btn renew" id="open-membership">继续购买训练计划</button>
+        </section>
+
+        <div class="entry card" id="open-orders">
+          <div>
+            <div class="entry-title">订单入口</div>
+            <div class="entry-sub">快速查看已购买订单</div>
+          </div>
+          <div>›</div>
+        </div>
+
+        <div class="entry card" id="logout-account">
+          <div>
+            <div class="entry-title">退出当前账户</div>
+            <div class="entry-sub">这台设备将不再自动登录</div>
+          </div>
+          <div>›</div>
+        </div>
+
+      </section>
+    </template>
+
+    <template id="history-detail-template">
+      <section class="screen detail-ref-screen">
+        <div class="topbar ref-topbar">
+          <button class="back" id="history-detail-back" type="button">‹</button>
+          <div class="top-title">点评详情</div>
+          <div class="top-action"></div>
+        </div>
+        <div class="detail-head">
+          <div class="word" id="history-detail-title"></div>
+          <div class="head-row">
+            <div class="head-sub" id="history-detail-time"></div>
+            <div class="total" id="history-detail-score"></div>
+          </div>
+        </div>
+        <div class="round-tabs" id="history-round-tabs"></div>
+        <section class="card detail-sec original-collapse-sec">
+          <div class="section-title-row">
+            <h3 class="section-title section-title--with-icon"><span class="ref-mini-icon doc"></span>你的表达原文</h3>
+            <button class="original-toggle" id="history-detail-transcript-toggle" type="button">
+              <span>展开</span>
+            </button>
+          </div>
+          <div class="original-text is-collapsed" id="history-detail-transcript"></div>
+        </section>
+        <section class="card score-card" id="history-detail-scores"></section>
+        <section class="card detail-sec"><h3 class="section-title section-title--with-icon"><span class="ref-mini-icon chat"></span>教练总结</h3><p id="history-detail-summary"></p></section>
+        <section class="card detail-sec"><h3 class="section-title section-title--with-icon"><span class="ref-mini-icon soft-green"></span>这一轮好的地方</h3><div class="bullets" id="history-detail-strengths"></div></section>
+        <section class="card detail-sec"><h3 class="section-title section-title--with-icon"><span class="ref-mini-icon soft-orange"></span>待提升的地方</h3><div class="bullets" id="history-detail-improvement"></div></section>
+        <section class="card detail-sec" id="history-detail-rewrite-wrap"><h3 class="section-title">教练整理版</h3><div class="demo-text" id="history-detail-rewrite"></div></section>
+      </section>
+    </template>
+
+    <template id="orders-template">
+      <section class="screen orders-ref-screen">
+        <div class="topbar ref-topbar">
+          <button class="back" id="orders-back" type="button">‹</button>
+          <div class="top-title">我的订单</div>
+          <div></div>
+        </div>
+        <div id="orders-list" class="orders-list"></div>
+      </section>
+    </template>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+      (function () {
+        const appRoot = document.querySelector("#app");
+        const baseUrl = window.location.origin || "http://127.0.0.1:8088";
+
+        function injectCss() {
+          const href = `${baseUrl}/styles.css?ts=${Date.now()}`;
+          const exists = Array.from(document.querySelectorAll('link[rel="stylesheet"]')).some(
+            (node) => node.href && node.href.includes("/styles.css")
+          );
+          if (!exists) {
+            const link = document.createElement("link");
+            link.rel = "stylesheet";
+            link.href = href;
+            document.head.appendChild(link);
+          }
+        }
+
+        function injectScript() {
+          if (window.__speakOutBootstrapped) return;
+          window.__speakOutBootstrapped = true;
+          const script = document.createElement("script");
+          script.src = `${baseUrl}/app.js?ts=${Date.now()}`;
+          document.body.appendChild(script);
+        }
+
+        window.addEventListener("DOMContentLoaded", () => {
+          setTimeout(() => {
+            if (!appRoot || appRoot.children.length === 0) {
+              injectCss();
+              injectScript();
+            }
+          }, 120);
+        });
+      })();
+    </script>
+    <script src="/app.js?v=20260601-free-expression-payfix"></script>
+  </body>
+</html>

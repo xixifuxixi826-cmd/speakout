@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>表达高手｜后台原型</title>
+    <link rel="stylesheet" href="/admin-console/styles.css?v=20260602-model-admin" />
+  </head>
+  <body>
+    <main class="shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">表达高手</div>
+          <p>运营与 AI 配置台</p>
+        </div>
+
+        <nav class="nav">
+          <button class="nav-link nav-link--active" data-view="overview">概览</button>
+          <button class="nav-link" data-view="users">用户列表</button>
+          <button class="nav-link" data-view="orders">订单列表</button>
+          <button class="nav-link" data-view="history">训练记录</button>
+          <button class="nav-link" data-view="words">内容管理</button>
+          <button class="nav-link" data-view="quotes">金句库</button>
+          <button class="nav-link" data-view="models">模型管理</button>
+          <button class="nav-link" data-view="prompts">AI Prompt</button>
+          <button class="nav-link" data-view="evals">批量评测</button>
+          <button class="nav-link" data-view="jobs">AI 评分任务</button>
+        </nav>
+      </aside>
+
+      <section class="content">
+        <section class="admin-view admin-view--active" data-view="overview">
+          <header class="hero">
+            <div>
+              <span class="eyebrow">运营后台</span>
+              <h1>表达高手管理台</h1>
+              <p>把用户、训练、付费、词库和 AI 评分配置收进同一个后台，让运营、内容和算法调优都能跑在一条闭环里。</p>
+            </div>
+            <button class="primary-button" id="export-today-data">导出近 7 日明细</button>
+          </header>
+
+          <section class="metrics" id="overview-metrics"></section>
+        </section>
+
+        <section class="admin-view" data-view="users">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <span class="eyebrow">用户</span>
+                <h2>用户列表</h2>
+              </div>
+            </div>
+            <div class="prompt-subnav">
+              <button class="prompt-tab-button prompt-tab-button--active" data-user-tab="list">用户列表</button>
+              <button class="prompt-tab-button" data-user-tab="registration">注册权益</button>
+              <button class="prompt-tab-button" data-user-tab="manual">手动加权益</button>
+              <button class="prompt-tab-button" data-user-tab="history">操作历史</button>
+            </div>
+
+            <div class="user-workbench">
+              <section class="user-tab-panel user-tab-panel--active" data-user-panel="list">
+                <div class="user-toolbar">
+                  <div class="prompt-field user-search-field">
+                    <label>手机号搜索</label>
+                    <input class="real-input" id="user-phone-search" placeholder="输入手机号、尾号或完整号码" />
+                  </div>
+                  <button class="ghost-button" id="toggle-phone-visibility" type="button">显示明文手机号</button>
+                  <button class="ghost-button" id="clear-user-search" type="button">清空</button>
+                </div>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>用户</th>
+                      <th>注册时间</th>
+                      <th>权益状态</th>
+                      <th>训练计划</th>
+                      <th>累计训练次数</th>
+                      <th>剩余次数</th>
+                      <th>到期时间</th>
+                      <th>已支付订单</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="users-table"></tbody>
+                </table>
+              </section>
+
+              <section class="user-tab-panel" data-user-panel="registration">
+                <article class="prompt-card prompt-card--wide">
+                <div class="prompt-card__head">
+                  <div>
+                    <p class="prompt-card__eyebrow">注册权益</p>
+                    <h3>新用户默认赠送</h3>
+                  </div>
+                </div>
+                <div class="prompt-editor-grid">
+                  <div class="prompt-field">
+                    <label>注册赠送点评次数</label>
+                    <input class="real-input" id="user-free-trial-credits" type="number" min="0" placeholder="1" />
+                  </div>
+                  <div class="prompt-field">
+                    <label>赠送有效天数</label>
+                    <input class="real-input" id="user-free-trial-days" type="number" min="1" placeholder="7" />
+                  </div>
+                  <div class="prompt-field prompt-field--full">
+                    <pre class="fake-textarea fake-textarea--code" id="user-benefits-config-result">新用户注册后会自动获得这里设置的点评次数和有效期。</pre>
+                  </div>
+                </div>
+                <div class="prompt-actions">
+                  <button class="primary-button" id="save-user-benefits-config" type="button">保存注册权益</button>
+                </div>
+              </article>
+              </section>
+
+              <section class="user-tab-panel" data-user-panel="manual">
+                <div class="user-management-grid">
+              <article class="prompt-card prompt-card--wide">
+                <div class="prompt-card__head">
+                  <div>
+                    <p class="prompt-card__eyebrow">手动加权益</p>
+                    <h3>已注册 / 未注册手机号</h3>
+                  </div>
+                </div>
+                <div class="prompt-editor-grid">
+                  <div class="prompt-field prompt-field--full">
+                    <label>手机号</label>
+                    <input class="real-input" id="grant-phone" placeholder="用户提供的手机号" />
+                  </div>
+                  <div class="prompt-field">
+                    <label>增加点评次数</label>
+                    <input class="real-input" id="grant-credits" type="number" min="0" value="0" />
+                  </div>
+                  <div class="prompt-field">
+                    <label>延长有效天数</label>
+                    <input class="real-input" id="grant-days" type="number" min="0" value="0" />
+                  </div>
+                  <div class="prompt-field prompt-field--full">
+                    <label>备注</label>
+                    <input class="real-input" id="grant-note" placeholder="例如：小红书购买 / 私域补发" />
+                  </div>
+                  <div class="prompt-field">
+                    <label>设置到期日期</label>
+                    <input class="real-input" id="expire-date" type="date" />
+                  </div>
+                  <div class="prompt-field">
+                    <label>到期规则</label>
+                    <div class="fake-input">所选日期当天 23:59:59 到期</div>
+                  </div>
+                  <div class="prompt-field prompt-field--full">
+                    <pre class="fake-textarea fake-textarea--code" id="grant-result">已注册用户会立即增加；还没注册的手机号会先记下权益，用户注册后自动到账。</pre>
+                  </div>
+                </div>
+                <div class="prompt-actions">
+                  <button class="primary-button" id="grant-entitlement" type="button">增加权益</button>
+                  <button class="secondary-button" id="set-expire-at" type="button">设置到期时间</button>
+                </div>
+              </article>
+
+              <article class="prompt-card prompt-card--wide">
+                <div class="prompt-card__head">
+                  <div>
+                    <p class="prompt-card__eyebrow">待注册到账</p>
+                    <h3>已提前加好权益的手机号</h3>
+                  </div>
+                </div>
+                <p class="panel-note" id="pending-entitlements-summary">暂无待注册到账手机号。</p>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>手机号</th>
+                      <th>点评次数</th>
+                      <th>有效天数</th>
+                      <th>备注</th>
+                      <th>更新时间</th>
+                    </tr>
+                  </thead>
+                  <tbody id="pending-entitlements-table"></tbody>
+                </table>
+              </article>
+                </div>
+              </section>
+
+              <section class="user-tab-panel" data-user-panel="history">
+                <article class="prompt-card prompt-card--wide">
+                  <div class="prompt-card__head">
+                    <div>
+                      <p class="prompt-card__eyebrow">History</p>
+                      <h3>权益操作历史</h3>
+                    </div>
+                  </div>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>时间</th>
+                        <th>类型</th>
+                        <th>手机号</th>
+                        <th>次数</th>
+                        <th>天数</th>
+                        <th>状态</th>
+                        <th>备注</th>
+                      </tr>
+                    </thead>
+                    <tbody id="entitlement-history-table"></tbody>
+                  </table>
+                </article>
+              </section>
+            </div>
+          </section>
+        </section>
+
+        <section class="admin-view" data-view="orders">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <span class="eyebrow">订单</span>
+                <h2>订单列表</h2>
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>订单号</th>
+                  <th>用户</th>
+                  <th>训练计划</th>
+                  <th>金额</th>
+                  <th>状态</th>
+                  <th>支付时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="orders-table"></tbody>
+            </table>
+          </section>
+        </section>
+
+        <section class="admin-view" data-view="history">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <span class="eyebrow">训练</span>
+                <h2>训练记录</h2>
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>用户</th>
+                  <th>词组与详情</th>
+                  <th>得分</th>
+                  <th>教练轮次</th>
+                  <th>时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="history-table"></tbody>
+            </table>
+          </section>
+        </section>
+
+        <section class="admin-view" data-view="words">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <span class="eyebrow">内容</span>
+                <h2>内容管理</h2>
+              </div>
+            </div>
+            <p class="panel-note" id="words-summary">词库正在加载中…</p>
+            <div class="word-grid" id="words-grid"></div>
+          </section>
+        </section>
+
+        <section class="admin-view" data-view="quotes">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <span class="eyebrow">一日一思</span>
+                <h2>金句库</h2>
+              </div>
+            </div>
+            <p class="panel-note" id="quotes-summary">金句正在加载中…</p>
+            <div class="prompt-subnav">
+              <button class="prompt-tab-button prompt-tab-button--active" data-quote-tab="list">金句列表</button>
+              <button class="prompt-tab-button" data-quote-tab="create">新增金句</button>
+            </div>
+
+            <div class="quote-workbench">
+              <section class="quote-tab-panel quote-tab-panel--active" data-quote-panel="list">
+                <article class="prompt-card prompt-card--wide">
+                  <div class="prompt-card__head">
+                    <div>
+                      <p class="prompt-card__eyebrow">列表</p>
+                      <h3>当前金句池</h3>
+                    </div>
+                  </div>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>句子</th>
+                        <th>作者</th>
+                        <th>主题</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody id="quotes-table"></tbody>
+                  </table>
+                </article>
+              </section>
+
+              <section class="quote-tab-panel" data-quote-panel="create">
+                <article class="prompt-card prompt-card--wide">
+                <div class="prompt-card__head">
+                  <div>
+                    <p class="prompt-card__eyebrow">新增</p>
+                    <h3>添加一句首页金句</h3>
+                  </div>
+                </div>
+                <div class="prompt-editor-grid">
+                  <div class="prompt-field prompt-field--full">
+                    <label>句子原文</label>
+                    <textarea class="real-textarea" id="quote-text" placeholder="一句能让人停一下、想一下的话"></textarea>
+                  </div>
+                  <div class="prompt-field">
+                    <label>作者/出处</label>
+                    <input class="real-input" id="quote-author" placeholder="例如：蔡康永" />
+                  </div>
+                  <div class="prompt-field">
+                    <label>主题</label>
+                    <input class="real-input" id="quote-theme" placeholder="例如：表达、自由、成长" />
+                  </div>
+                  <div class="prompt-field">
+                    <label>来源名称</label>
+                    <input class="real-input" id="quote-source-label" placeholder="例如：节目/书名/网页" />
+                  </div>
+                  <div class="prompt-field">
+                    <label>来源链接</label>
+                    <input class="real-input" id="quote-source-url" placeholder="https://..." />
+                  </div>
+                  <div class="prompt-field prompt-field--full">
+                    <label>操作结果</label>
+                    <pre class="fake-textarea fake-textarea--code" id="quote-save-result">新增后会进入首页每日随机池。</pre>
+                  </div>
+                </div>
+                <div class="prompt-actions">
+                  <button class="primary-button" id="create-quote">新增金句</button>
+                </div>
+              </article>
+              </section>
+            </div>
+          </section>
+        </section>
+
+        <section class="admin-view" data-view="models">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <span class="eyebrow">Yunwu Models</span>
+                <h2>模型管理</h2>
+              </div>
+            </div>
+            <div class="prompt-subnav">
+              <button class="prompt-tab-button prompt-tab-button--active" data-model-tab="list">模型列表</button>
+              <button class="prompt-tab-button" data-model-tab="create">新增/编辑</button>
+              <button class="prompt-tab-button" data-model-tab="connection">连接测试</button>
+              <button class="prompt-tab-button" data-model-tab="schema">解析测试</button>
+            </div>
+            <div class="model-workbench">
+              <section class="model-tab-panel model-tab-panel--active" data-model-panel="list">
+                <article class="prompt-card prompt-card--wide">
+                  <div class="prompt-card__head"><div><p class="prompt-card__eyebrow">Models</p><h3>云雾可用模型</h3></div></div>
+                  <table>
+                    <thead><tr><th>模型</th><th>状态</th><th>Key</th><th>最近测试</th><th>备注</th><th>操作</th></tr></thead>
+                    <tbody id="models-table"></tbody>
+                  </table>
+                </article>
+              </section>
+              <section class="model-tab-panel" data-model-panel="create">
+                <article class="prompt-card prompt-card--wide">
+                  <div class="prompt-card__head"><div><p class="prompt-card__eyebrow">Config</p><h3>新增或编辑模型</h3></div></div>
+                  <div class="prompt-editor-grid">
+                    <input type="hidden" id="model-id" />
+                    <div class="prompt-field"><label>展示名称</label><input class="real-input" id="model-display-name" placeholder="例如：云雾 GPT-4o 稳定版" /></div>
+                    <div class="prompt-field"><label>模型名称</label><input class="real-input" id="model-name" placeholder="例如：gpt-4o / deepseek-chat" /></div>
+                    <div class="prompt-field"><label>供应商</label><div class="fake-input">云雾 Yunwu</div></div>
+                    <div class="prompt-field"><label>状态</label><select class="real-input" id="model-status"><option value="active">启用</option><option value="testing">测试中</option><option value="inactive">停用</option><option value="deprecated">废弃</option></select></div>
+                    <div class="prompt-field prompt-field--full"><label>API Key</label><input class="real-input" id="model-api-key" type="password" placeholder="保存后不回显；留空表示沿用旧 Key" /></div>
+                    <div class="prompt-field prompt-field--full"><label>版本备注</label><input class="real-input" id="model-version-note" placeholder="例如：用于 6 月新版 Prompt 批测" /></div>
+                    <div class="prompt-field prompt-field--full"><pre class="fake-textarea fake-textarea--code" id="model-save-result">Base URL 固定使用当前云雾接口配置，不在这里重复填写。</pre></div>
+                  </div>
+                  <div class="prompt-actions"><button class="primary-button" id="save-model">保存模型</button><button class="ghost-button" id="clear-model-form" type="button">清空表单</button></div>
+                </article>
+              </section>
+              <section class="model-tab-panel" data-model-panel="connection">
+                <article class="prompt-card prompt-card--wide">
+                  <div class="prompt-card__head"><div><p class="prompt-card__eyebrow">Connection</p><h3>接口连通性测试</h3></div><span class="prompt-status" id="model-connection-status">空闲</span></div>
+                  <div class="prompt-editor-grid">
+                    <div class="prompt-field prompt-field--full"><label>选择模型</label><select class="real-input" id="connection-model-select"></select></div>
+                    <div class="prompt-field prompt-field--full"><pre class="fake-textarea fake-textarea--code prompt-result" id="model-connection-result">点击测试后会显示是否鉴权成功、模型是否可用、响应耗时。</pre></div>
+                  </div>
+                  <div class="prompt-actions"><button class="primary-button" id="test-model-connection">测试连接</button></div>
+                </article>
+              </section>
+              <section class="model-tab-panel" data-model-panel="schema">
+                <article class="prompt-card prompt-card--wide">
+                  <div class="prompt-card__head"><div><p class="prompt-card__eyebrow">Schema</p><h3>C 端解析规范测试</h3></div><span class="prompt-status" id="model-schema-status">空闲</span></div>
+                  <div class="prompt-editor-grid">
+                    <div class="prompt-field"><label>选择模型</label><select class="real-input" id="schema-model-select"></select></div>
+                    <div class="prompt-field"><label>测试词语</label><input class="real-input" id="schema-selected-words" value="自由 / 代价" /></div>
+                    <div class="prompt-field"><label>当前轮次</label><input class="real-input" id="schema-attempt-no" type="number" min="1" max="3" value="1" /></div>
+                    <div class="prompt-field prompt-field--full"><label>测试表达文本</label><textarea class="real-textarea" id="schema-user-text">我觉得自由不是想做什么就做什么，它更像是愿意承担选择后果的能力。比如一个人换工作，看起来是在追求自由，但真正决定他是否自由的，是他能不能承担收入波动和关系变化。</textarea></div>
+                    <div class="prompt-field prompt-field--full"><pre class="fake-textarea fake-textarea--code prompt-result" id="model-schema-result">这里会显示：原始输出、JSON 是否可解析、字段是否满足 C 端渲染要求。</pre></div>
+                  </div>
+                  <div class="prompt-actions"><button class="primary-button" id="test-model-schema">测试解析规范</button></div>
+                </article>
+              </section>
+            </div>
+          </section>
+        </section>
+
+        <section class="admin-view" data-view="prompts">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <span class="eyebrow">AI Prompt</span>
+                <h2>Prompt 管理</h2>
+              </div>
+            </div>
+
+            <div class="prompt-subnav">
+              <button class="prompt-tab-button prompt-tab-button--active" data-prompt-tab="published">线上 Prompt</button>
+              <button class="prompt-tab-button" data-prompt-tab="lab">Prompt 调优</button>
+              <button class="prompt-tab-button" data-prompt-tab="versions">版本历史</button>
+            </div>
+
+            <div class="prompt-workbench">
+              <section class="prompt-tab-panel" data-prompt-panel="runtime">
+                <article class="prompt-card prompt-card--wide">
+                  <div class="prompt-card__head">
+                    <div>
+                      <p class="prompt-card__eyebrow">Runtime</p>
+                      <h3>模型接口、Key 与强制真实调用</h3>
+                    </div>
+                  </div>
+                  <div class="prompt-editor-grid prompt-editor-grid--runtime">
+                    <div class="prompt-field prompt-field--full">
+                      <label>模型接口地址</label>
+                      <input class="real-input" id="runtime-api-url" placeholder="https://yunwu.ai/v1/chat/completions" />
+                    </div>
+                    <div class="prompt-field">
+                      <label>Provider Code</label>
+                      <input class="real-input" id="runtime-provider-code" placeholder="yunwu" />
+                    </div>
+                    <div class="prompt-field">
+                      <label>模型名</label>
+                      <input class="real-input" id="runtime-model-name" placeholder="gpt-4o" />
+                    </div>
+                    <div class="prompt-field prompt-field--full">
+                      <label>API Key</label>
+                      <input class="real-input" id="runtime-api-key" type="password" placeholder="sk-..." />
+                    </div>
+                    <div class="prompt-field prompt-field--full">
+                      <label class="toggle-line">
+                        <input id="runtime-require-real-ai" type="checkbox" />
+                        <span>强制走真实 AI，不再回退本地评分器</span>
+                      </label>
+                    </div>
+                    <div class="prompt-field prompt-field--full">
+                      <label>保存结果</label>
+                      <pre class="fake-textarea fake-textarea--code" id="runtime-save-result">配置改完后点击“保存模型配置”。</pre>
+                    </div>
+                  </div>
+                  <div class="prompt-actions">
+                    <button class="primary-button" id="save-runtime-config">保存模型配置</button>
+                  </div>
+                </article>
+              </section>
+
+              <section class="prompt-tab-panel prompt-tab-panel--active" data-prompt-panel="published">
+                <article class="prompt-card prompt-card--wide" id="prompt-summary"></article>
+                <div class="published-prompt-grid">
+                  <article class="prompt-card prompt-card--wide">
+                    <p class="prompt-card__eyebrow">System Prompt</p>
+                    <pre class="prompt-readonly" id="published-system-prompt">加载中…</pre>
+                  </article>
+                  <article class="prompt-card prompt-card--wide">
+                    <p class="prompt-card__eyebrow">User Prompt Template</p>
+                    <pre class="prompt-readonly" id="published-user-prompt">加载中…</pre>
+                  </article>
+                </div>
+              </section>
+
+              <section class="prompt-tab-panel" data-prompt-panel="lab">
+                <article class="prompt-card prompt-card--wide prompt-card--editor">
+                  <div class="prompt-card__head">
+                    <div>
+                      <p class="prompt-card__eyebrow">Lab</p>
+                      <h3>测试版本编辑与试跑</h3>
+                    </div>
+                    <span class="prompt-status" id="prompt-test-status">空闲</span>
+                  </div>
+
+                  <div class="prompt-lab-grid">
+                    <div class="prompt-field prompt-field--full">
+                      <label>System Prompt</label>
+                      <textarea class="real-textarea real-textarea--xl" id="prompt-system-text"></textarea>
+                    </div>
+                    <div class="prompt-field prompt-field--full">
+                      <label>User Prompt Template</label>
+                      <textarea class="real-textarea real-textarea--xl" id="prompt-user-template"></textarea>
+                    </div>
+                    <div class="prompt-field">
+                      <label>测试词语</label>
+                      <input class="real-input" id="test-selected-words" value="自由 / 成长" />
+                    </div>
+                    <div class="prompt-field">
+                      <label>当前轮次</label>
+                      <input class="real-input" id="test-attempt-no" type="number" min="1" max="3" value="1" />
+                    </div>
+                    <div class="prompt-field">
+                      <label>测试重点</label>
+                      <input class="real-input" id="test-goal" placeholder="例如：检查是否能识别故事不具体" />
+                    </div>
+                    <div class="prompt-field">
+                      <label>期望观察</label>
+                      <input class="real-input" id="test-expected-focus" placeholder="例如：是否给出具体、少套话的建议" />
+                    </div>
+                    <div class="prompt-field prompt-field--full">
+                      <label>前几轮上下文</label>
+                      <textarea class="real-textarea" id="test-previous-context" placeholder="可以粘贴前一轮用户输入、教练反馈、分数变化，用来测试递进点评。"></textarea>
+                    </div>
+                    <div class="prompt-field prompt-field--full">
+                      <label>用户转写</label>
+                      <textarea class="real-textarea real-textarea--lg" id="test-user-text">我的观点是，自由是一种成长。不是因为自由本身让人轻松，而是因为当一个人开始自己做选择，他就必须学会承受选择带来的后果。</textarea>
+                    </div>
+                    <div class="prompt-field prompt-field--full">
+                      <label>版本备注</label>
+                      <input class="real-input" id="prompt-change-note" placeholder="例如：增强三轮递进逻辑、重写六维评分定义" />
+                    </div>
+                    <div class="prompt-field prompt-field--full">
+                      <div class="prompt-actions prompt-actions--sticky">
+                        <button class="primary-button" id="save-prompt-config">保存为新版本</button>
+                        <button class="secondary-button" id="run-prompt-test">试跑一次</button>
+                      </div>
+                    </div>
+                    <div class="prompt-field prompt-field--full">
+                      <label>模型返回预览</label>
+                      <pre class="fake-textarea fake-textarea--code prompt-result" id="test-result">点击“试跑一次”后，这里会出现结构化评分结果。</pre>
+                    </div>
+                  </div>
+                </article>
+              </section>
+
+              <section class="prompt-tab-panel" data-prompt-panel="versions">
+                <div class="prompt-version-layout">
+                  <article class="prompt-card">
+                    <div class="prompt-card__head">
+                      <div>
+                        <p class="prompt-card__eyebrow">Versions</p>
+                        <h3>历史版本</h3>
+                      </div>
+                    </div>
+                    <div class="prompt-version-list" id="prompt-versions-list">版本加载中…</div>
+                  </article>
+                  <article class="prompt-card prompt-card--wide">
+                    <div id="prompt-version-detail">选择一个版本查看完整 Prompt。</div>
+                  </article>
+                </div>
+              </section>
+            </div>
+          </section>
+        </section>
+
+        <section class="admin-view" data-view="jobs">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <span class="eyebrow">AI 任务</span>
+                <h2>AI 评分任务</h2>
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>任务号</th>
+                  <th>会话</th>
+                  <th>Prompt 版本</th>
+                  <th>模型</th>
+                  <th>状态</th>
+                  <th>最近更新时间</th>
+                </tr>
+              </thead>
+              <tbody id="jobs-table"></tbody>
+            </table>
+          </section>
+        </section>
+
+        <section class="admin-view" data-view="evals">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <span class="eyebrow">Prompt Eval</span>
+                <h2>批量评测</h2>
+              </div>
+            </div>
+
+            <div class="prompt-subnav">
+              <button class="prompt-tab-button prompt-tab-button--active" data-eval-tab="run">创建评测</button>
+              <button class="prompt-tab-button" data-eval-tab="batches">批次下载</button>
+            </div>
+
+            <div class="eval-workbench">
+              <section class="eval-tab-panel eval-tab-panel--active" data-eval-panel="run">
+                <article class="prompt-card prompt-card--wide">
+                <div class="prompt-card__head">
+                  <div>
+                    <p class="prompt-card__eyebrow">Run</p>
+                    <h3>从表格复制样本，批量试跑当前线上 Prompt</h3>
+                  </div>
+                  <span class="prompt-status" id="eval-status">空闲</span>
+                </div>
+                <div class="prompt-editor-grid">
+                  <div class="prompt-field">
+                    <label>批次名称</label>
+                    <input class="real-input" id="eval-batch-name" placeholder="例如：v12 第一轮 10 条样本" />
+                  </div>
+                  <div class="prompt-field">
+                    <label>最大调用条数</label>
+                    <input class="real-input" id="eval-max-count" type="number" min="1" max="50" value="50" />
+                  </div>
+                  <div class="prompt-field prompt-field--full">
+                    <label>评测模型</label>
+                    <select class="real-input" id="eval-model-select"></select>
+                  </div>
+                  <div class="prompt-field prompt-field--full">
+                    <label>表格粘贴区</label>
+                    <p class="panel-note">从 Excel / 飞书 / Google Sheets 复制下面这些列即可：样本编号、词语A、词语B、轮次、用户表达。</p>
+                    <textarea class="real-textarea real-textarea--xl" id="eval-samples-text">样本编号	词语A	词语B	轮次	用户表达
+S001	自由	代价	1	自由是一种代价。因为当一个人开始自己做选择，他就不能再把结果推给别人。
+S002	焦虑	秩序	1	焦虑是一种秩序。我觉得很多人的焦虑不是混乱，而是被一种看不见的标准安排好了。</textarea>
+                  </div>
+                  <div class="prompt-field prompt-field--full">
+                    <label>运行结果</label>
+                    <pre class="fake-textarea fake-textarea--code" id="eval-run-result">每次最多跑 50 条，你可以在上方自行设置本批次调用条数。失败会记录 error，不会编假结果。</pre>
+                  </div>
+                </div>
+                <div class="prompt-actions">
+                  <button class="primary-button" id="run-prompt-eval">开始批量评测</button>
+                </div>
+              </article>
+              </section>
+
+              <section class="eval-tab-panel" data-eval-panel="batches">
+                <article class="prompt-card prompt-card--wide">
+                <div class="prompt-card__head">
+                  <div>
+                    <p class="prompt-card__eyebrow">Batches</p>
+                    <h3>评测批次</h3>
+                  </div>
+                </div>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>批次</th>
+                      <th>Prompt</th>
+                      <th>模型</th>
+                      <th>结果</th>
+                      <th>时间</th>
+                      <th>下载</th>
+                    </tr>
+                  </thead>
+                  <tbody id="eval-batches-table"></tbody>
+                </table>
+              </article>
+              </section>
+            </div>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <script src="/admin-console/app.js?v=20260602-model-admin"></script>
+  </body>
+</html>

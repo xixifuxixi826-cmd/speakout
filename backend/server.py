@@ -22,7 +22,9 @@ from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parent
 FRONTEND_DIR = ROOT.parent / "代码原型" / "biaodagaoshou-h5"
+FRONTEND_FALLBACK_DIR = ROOT / "static_h5"
 ADMIN_FRONTEND_DIR = ROOT.parent / "代码原型" / "开口-miniapp-prototype" / "admin"
+ADMIN_FRONTEND_FALLBACK_DIR = ROOT / "static_admin"
 ADMIN_ROUTE_PREFIX = "/admin-console"
 DEFAULT_DATA_DIR = ROOT / "data"
 if os.getenv("APP_DATA_DIR"):
@@ -5882,6 +5884,12 @@ def update_redeem_code_status(conn, code, status):
 class AppHandler(BaseHTTPRequestHandler):
     server_version = "ExpressMasterHTTP/0.1"
 
+    def frontend_dir(self):
+        return FRONTEND_DIR if FRONTEND_DIR.is_dir() else FRONTEND_FALLBACK_DIR
+
+    def admin_frontend_dir(self):
+        return ADMIN_FRONTEND_DIR if ADMIN_FRONTEND_DIR.is_dir() else ADMIN_FRONTEND_FALLBACK_DIR
+
     def send_file(self, file_path: Path, content_type: str):
         body = file_path.read_bytes()
         self.send_response(200)
@@ -5894,8 +5902,9 @@ class AppHandler(BaseHTTPRequestHandler):
 
     def send_frontend_asset(self, request_path):
         relative_path = request_path.lstrip("/")
-        file_path = (FRONTEND_DIR / relative_path).resolve()
-        assets_root = (FRONTEND_DIR / "assets").resolve()
+        frontend_root = self.frontend_dir()
+        file_path = (frontend_root / relative_path).resolve()
+        assets_root = (frontend_root / "assets").resolve()
         if not str(file_path).startswith(str(assets_root)) or not file_path.is_file():
             self.fail("资源不存在", 404)
             return
@@ -5904,8 +5913,8 @@ class AppHandler(BaseHTTPRequestHandler):
 
     def send_admin_file(self, request_path):
         relative_path = request_path.removeprefix(f"{ADMIN_ROUTE_PREFIX}/") or "index.html"
-        file_path = (ADMIN_FRONTEND_DIR / relative_path).resolve()
-        admin_root = ADMIN_FRONTEND_DIR.resolve()
+        admin_root = self.admin_frontend_dir().resolve()
+        file_path = (admin_root / relative_path).resolve()
         if not str(file_path).startswith(str(admin_root)) or not file_path.is_file():
             self.fail("资源不存在", 404)
             return
@@ -6059,29 +6068,41 @@ class AppHandler(BaseHTTPRequestHandler):
             self.end_headers()
             return
         if path == f"{ADMIN_ROUTE_PREFIX}/":
-            self.send_file(ADMIN_FRONTEND_DIR / "index.html", "text/html; charset=utf-8")
+            self.send_file(self.admin_frontend_dir() / "index.html", "text/html; charset=utf-8")
             return
         if path.startswith(f"{ADMIN_ROUTE_PREFIX}/"):
             self.send_admin_file(path)
             return
+        if path in ("/", "/index.html"):
+            frontend_index = self.frontend_dir() / "index.html"
+            if frontend_index.is_file():
+                self.send_file(frontend_index, "text/html; charset=utf-8")
+                return
+        if path in ("/agreement", "/agreement.html"):
+            agreement_file = self.frontend_dir() / "agreement.html"
+            if agreement_file.is_file():
+                self.send_file(agreement_file, "text/html; charset=utf-8")
+                return
+        if path == "/app.js":
+            app_file = self.frontend_dir() / "app.js"
+            if app_file.is_file():
+                self.send_file(app_file, "application/javascript; charset=utf-8")
+                return
+        if path == "/styles.css":
+            styles_file = self.frontend_dir() / "styles.css"
+            if styles_file.is_file():
+                self.send_file(styles_file, "text/css; charset=utf-8")
+                return
+        if path.startswith("/assets/"):
+            self.send_frontend_asset(path)
+            return
         if not os.getenv("RAILWAY_ENVIRONMENT"):
-            if path in ("/", "/index.html"):
-                self.send_file(FRONTEND_DIR / "index.html", "text/html; charset=utf-8")
-                return
             if path in ("/payment-demo", "/payment-demo.html"):
-                self.send_file(FRONTEND_DIR / "payment-demo.html", "text/html; charset=utf-8")
-                return
-            if path in ("/agreement", "/agreement.html"):
-                self.send_file(FRONTEND_DIR / "agreement.html", "text/html; charset=utf-8")
-                return
-            if path == "/app.js":
-                self.send_file(FRONTEND_DIR / "app.js", "application/javascript; charset=utf-8")
-                return
-            if path == "/styles.css":
-                self.send_file(FRONTEND_DIR / "styles.css", "text/css; charset=utf-8")
-                return
-            if path.startswith("/assets/"):
-                self.send_frontend_asset(path)
+                payment_demo_file = self.frontend_dir() / "payment-demo.html"
+                if payment_demo_file.is_file():
+                    self.send_file(payment_demo_file, "text/html; charset=utf-8")
+                    return
+                self.fail("资源不存在", 404)
                 return
 
         conn = db()
