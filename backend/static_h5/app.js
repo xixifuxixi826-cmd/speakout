@@ -155,7 +155,7 @@ async function request(path, options = {}) {
 }
 
 function trackTrainingEvent(eventName, selectedWords = []) {
-  const sessionId = state.training?.id || "";
+  const sessionId = state.training?.sessionId || state.training?.id || "";
   const eventKey = `${eventName}:${sessionId}:${selectedWords.join("|")}`;
   if (!sessionId || state.trackedEvents.has(eventKey)) return;
   state.trackedEvents.add(eventKey);

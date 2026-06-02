@@ -4131,9 +4131,16 @@ def paid_repurchase_order_count(conn, date_clause="", params=()):
 def training_metrics(conn, date_clause="", params=()):
     entered_pairs = conn.execute(
         f"""
-        SELECT COUNT(DISTINCT event_key) AS count
-        FROM training_events
-        WHERE event_name = 'speaking_page_entered'
+        SELECT COUNT(DISTINCT pair_key) AS count
+        FROM (
+          SELECT COALESCE(NULLIF(session_id, ''), event_key) AS pair_key, created_at
+          FROM training_events
+          WHERE event_name IN ('speaking_page_entered', 'coach_feedback_submitted', 'coach_feedback_success')
+          UNION
+          SELECT COALESCE(NULLIF(session_id, ''), id) AS pair_key, created_at
+          FROM history_records
+        )
+        WHERE 1 = 1
           {date_clause}
         """,
         params,
@@ -4198,7 +4205,22 @@ def training_metrics(conn, date_clause="", params=()):
 
 def admin_dashboard_metrics(conn):
     users = conn.execute("SELECT COUNT(*) AS count FROM payment_demo_users").fetchone()["count"]
-    paid_users = conn.execute("SELECT COUNT(*) AS count FROM payment_demo_memberships").fetchone()["count"]
+    benefit_users = conn.execute("SELECT COUNT(*) AS count FROM payment_demo_memberships").fetchone()["count"]
+    free_benefit_users = conn.execute(
+        """
+        SELECT COUNT(*) AS count
+        FROM payment_demo_memberships m
+        WHERE NOT EXISTS (
+          SELECT 1
+          FROM payment_demo_orders o
+          WHERE o.user_id = m.user_id
+            AND o.status = 'paid'
+        )
+        """
+    ).fetchone()["count"]
+    paid_users = conn.execute(
+        "SELECT COUNT(DISTINCT user_id) AS count FROM payment_demo_orders WHERE status = 'paid'"
+    ).fetchone()["count"]
     paid_orders = conn.execute(
         "SELECT COUNT(*) AS count FROM payment_demo_orders WHERE status = 'paid'"
     ).fetchone()["count"]
@@ -4213,6 +4235,8 @@ def admin_dashboard_metrics(conn):
         "users": {
             "registeredUsers": users,
             "paidUsers": paid_users,
+            "benefitUsers": benefit_users,
+            "freeBenefitUsers": free_benefit_users,
         },
         "orders": {
             "paidOrders": paid_orders,

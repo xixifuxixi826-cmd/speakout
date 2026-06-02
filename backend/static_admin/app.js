@@ -107,7 +107,9 @@ function renderOverview(overview) {
       title: "用户相关",
       items: [
         ["注册用户数", overview.users?.registeredUsers || 0],
-        ["付费用户数", overview.users?.paidUsers || 0]
+        ["付费用户数", overview.users?.paidUsers || 0],
+        ["免费权益用户数", overview.users?.freeBenefitUsers || 0],
+        ["有权益用户数", overview.users?.benefitUsers || 0]
       ]
     },
     {
