@@ -15,9 +15,6 @@ const API_BASE = (() => {
   if (privateLanPattern.test(window.location.hostname)) {
     return `${window.location.protocol}//${window.location.hostname}:8765`;
   }
-  if (window.location.hostname === "getspeakout.com" || window.location.hostname.endsWith(".getspeakout.com")) {
-    return "https://imaginative-love-production.up.railway.app";
-  }
   return window.location.origin;
 })();
 
@@ -51,6 +48,25 @@ const recentCardToggles = new Map();
 const PAYMENT_PENDING_KEY = "biaoda_pending_payment";
 const TRAINING_RECOVERY_KEY = "biaoda_training_recovery";
 let paymentResumePromptOpen = false;
+let draftSaveTimer = null;
+let latestDraftSave = Promise.resolve();
+
+function runInBackground(task, label = "后台刷新") {
+  Promise.resolve()
+    .then(task)
+    .catch((error) => {
+      console.warn(`${label} failed`, error);
+    });
+}
+
+function refreshAndRenderIf(predicate, task, label) {
+  runInBackground(async () => {
+    await task();
+    if (!predicate || predicate()) {
+      render();
+    }
+  }, label);
+}
 
 function getClientId() {
   const storageKey = "biaoda_client_id";
@@ -714,7 +730,9 @@ function renderLanding() {
 
   document.querySelector("#start-training").addEventListener("click", async () => {
     try {
-      await refreshAccountState();
+      if (!state.account) {
+        await refreshAccountState();
+      }
       if (!hasLoggedInAccount()) {
         state.tab = "train";
         state.screen = "auth";
@@ -830,13 +848,11 @@ function renderTraining() {
   });
 
   document.querySelector("#proceed-training").addEventListener("click", async () => {
-    const current = await request("/api/training/session/current");
-    state.training = current;
-    if (current.isComplete) {
+    if (state.training?.isComplete) {
       await startTraining();
       return;
     }
-    if (current.selectedCount !== 2) {
+    if ((state.training?.selectedCount || 0) !== 2) {
       showToast("先选 2 张词卡");
       return;
     }
@@ -974,11 +990,24 @@ function renderSpeaking() {
     }
   }, 1000);
 
-  textarea.addEventListener("input", async () => {
-    state.training = await request("/api/training/session/current/draft", {
-      method: "POST",
-      body: JSON.stringify({ draftText: textarea.value }),
-    });
+  textarea.addEventListener("input", () => {
+    state.training.draftText = textarea.value;
+    window.clearTimeout(draftSaveTimer);
+    draftSaveTimer = window.setTimeout(() => {
+      const draftText = textarea.value;
+      latestDraftSave = request("/api/training/session/current/draft", {
+        method: "POST",
+        body: JSON.stringify({ draftText }),
+      })
+        .then((session) => {
+          if (state.training?.sessionId === session?.sessionId) {
+            state.training = { ...session, draftText };
+          }
+        })
+        .catch((error) => {
+          console.warn("draft save failed", error);
+        });
+    }, 700);
   });
 
   document.querySelector("#speaking-back").addEventListener("click", () => {
@@ -999,6 +1028,7 @@ function renderSpeaking() {
       showToast("先讲一点出来，再交给教练点评");
       return;
     }
+    window.clearTimeout(draftSaveTimer);
     trackTrainingEvent("coach_feedback_submit_clicked", words);
     state.training.draftText = textarea.value;
     state.screen = "analyzing";
@@ -1014,12 +1044,12 @@ function renderSpeaking() {
         }),
       });
       state.screen = "feedback";
-      if (state.feedback.isFinal) {
-        await refreshSummaryHistoryAndProfile();
-      } else {
-        await refreshHistoryAndProfile();
-      }
       render();
+      refreshAndRenderIf(
+        () => state.screen === "feedback",
+        () => state.feedback.isFinal ? refreshSummaryHistoryAndProfile() : refreshHistoryAndProfile(),
+        "反馈后资料刷新"
+      );
     } catch (error) {
       if ((error?.message || "").includes("权益") || (error?.message || "").includes("开通") || (error?.message || "").includes("续费")) {
         trackTrainingEvent("coach_feedback_blocked_payment", words);
@@ -1238,7 +1268,7 @@ function bindFeedbackActionButtons(isProgressRound, hasRewrite) {
     if (isProgressRound) {
       const result = await request("/api/training/session/current/continue", { method: "POST" });
       if (result.route.includes("speaking")) {
-        state.training = await request("/api/training/session/current");
+        state.training = result.state || state.training;
         state.training.draftText = "__CLEAR__";
         state.screen = "speaking";
       }
@@ -1248,7 +1278,7 @@ function bindFeedbackActionButtons(isProgressRound, hasRewrite) {
     const result = await request("/api/training/session/current/continue", { method: "POST" });
     if (result.route.includes("training")) {
       state.feedback = null;
-      state.training = await request("/api/training/session/current");
+      state.training = result.state || state.training;
       state.screen = "training";
     } else if (result.route.includes("account/plan")) {
       state.tab = "profile";
@@ -1267,7 +1297,7 @@ function bindFeedbackActionButtons(isProgressRound, hasRewrite) {
       const result = await request("/api/training/session/current/continue", { method: "POST" });
       state.feedback = null;
       if (result.route.includes("training")) {
-        state.training = await request("/api/training/session/current");
+        state.training = result.state || state.training;
         state.screen = "training";
       } else if (result.route.includes("account/plan")) {
         state.tab = "profile";
@@ -1977,22 +2007,43 @@ async function syncTrainStateFromBackend(options = {}) {
 bottomLinks.forEach((button) => {
   button.addEventListener("click", async () => {
     state.tab = button.dataset.tab;
-    await refreshAccountState();
     if (state.tab === "history") {
       if (!hasLoggedInAccount()) {
         state.tab = "train";
         state.screen = "auth";
         render();
+        refreshAndRenderIf(() => state.screen === "auth", refreshAccountState, "账号状态刷新");
         return;
       }
-      state.history = await request("/api/training/history");
       state.screen = "history";
+      render();
+      refreshAndRenderIf(
+        () => state.tab === "history" && state.screen === "history",
+        async () => {
+          state.history = await request("/api/training/history");
+        },
+        "历史记录刷新"
+      );
+      return;
     }
     if (state.tab === "profile") {
       state.screen = "profile";
-      if (hasLoggedInAccount()) {
-        state.profile = await request("/api/user/profile");
+      if (!hasLoggedInAccount()) {
+        state.tab = "train";
+        state.screen = "auth";
+        render();
+        refreshAndRenderIf(() => state.screen === "auth", refreshAccountState, "账号状态刷新");
+        return;
       }
+      render();
+      refreshAndRenderIf(
+        () => state.tab === "profile" && state.screen === "profile",
+        async () => {
+          state.profile = await request("/api/user/profile");
+        },
+        "个人页刷新"
+      );
+      return;
     }
     if (state.tab === "train") {
       if (!hasLoggedInAccount()) {
@@ -2000,11 +2051,33 @@ bottomLinks.forEach((button) => {
       } else if (!isAccountActive()) {
         state.screen = "landing";
       } else {
-        await syncTrainStateFromBackend();
-        if (hasTrainingRecovery() && state.screen === "speaking") {
-          clearTrainingRecovery();
-        }
+        const trainScreens = new Set([
+          "landing",
+          "training",
+          "thinking",
+          "speaking",
+          "analyzing",
+          "feedback",
+          "feedbackEvaluation",
+          "coachDemo",
+        ]);
+        state.screen = state.training && trainScreens.has(state.screen) ? state.screen : "landing";
       }
+      render();
+      refreshAndRenderIf(
+        () => state.tab === "train",
+        async () => {
+          await refreshAccountState();
+          if (hasLoggedInAccount() && isAccountActive()) {
+            await syncTrainStateFromBackend();
+            if (hasTrainingRecovery() && state.screen === "speaking") {
+              clearTrainingRecovery();
+            }
+          }
+        },
+        "训练状态刷新"
+      );
+      return;
     }
     render();
   });
@@ -2035,10 +2108,14 @@ async function bootstrap() {
         return;
       }
     }
-    await loadDashboardData();
     state.tab = "train";
     state.screen = "landing";
     render();
+    refreshAndRenderIf(
+      () => state.tab === "train" && state.screen === "landing",
+      loadDashboardData,
+      "首页数据加载"
+    );
   } catch (error) {
     const detail = error && error.message ? error.message : String(error || "unknown error");
     app.innerHTML = `

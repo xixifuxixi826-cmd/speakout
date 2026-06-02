@@ -3073,7 +3073,8 @@ def continue_after_feedback(conn, user_id, auth_token=""):
             (now_text(), active["id"]),
         )
         conn.commit()
-        return {"route": "/pages/speaking/index?mode=retry"}
+        next_state = serialize_session(conn, fetch_active_session(conn, user_id), user_id, auth_token)
+        return {"route": "/pages/speaking/index?mode=retry", "state": next_state}
 
     access_status, payment_membership = training_access_status(conn, auth_token, user_id)
     if access_status in ("inactive", "expired", "quota_exhausted", "unauthenticated"):
@@ -3097,7 +3098,8 @@ def continue_after_feedback(conn, user_id, auth_token=""):
         return {"route": "/pages/training/index?mode=next"}
 
     conn.commit()
-    return {"route": "/pages/training/index"}
+    next_state = serialize_session(conn, fetch_active_session(conn, user_id), user_id, auth_token)
+    return {"route": "/pages/training/index", "state": next_state}
 
 
 def daily_quote(conn):
