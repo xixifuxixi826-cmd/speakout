@@ -10,3 +10,5 @@ backend/data/
 *.log
 tmp/
 temp/
+.wrangler/
+deploy/*.zip
