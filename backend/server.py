@@ -5056,13 +5056,20 @@ def admin_runtime_config():
         "requireRealAi": runtime_config["require_real_ai"],
     }
 
-def model_row_to_dict(row):
+def model_row_to_dict(row, runtime_config=None):
+    runtime_config = runtime_config or {}
+    runtime_key_configured = bool(runtime_config.get("model_api_key"))
+    is_runtime_model = (
+        row["status"] == "active"
+        and row["model_name"] == (runtime_config.get("model_api_model") or row["model_name"])
+        and row["provider_code"] == (runtime_config.get("model_provider_code") or row["provider_code"])
+    )
     return {
         "id": row["id"],
         "modelName": row["model_name"],
         "displayName": row["display_name"],
         "providerCode": row["provider_code"],
-        "apiKeyConfigured": bool(row["api_key"]),
+        "apiKeyConfigured": bool(row["api_key"]) or (is_runtime_model and runtime_key_configured),
         "status": row["status"],
         "versionNote": row["version_note"],
         "lastTestStatus": row["last_test_status"],
@@ -5075,7 +5082,8 @@ def model_row_to_dict(row):
 
 def admin_models(conn):
     rows = conn.execute("SELECT * FROM ai_models ORDER BY updated_at DESC, created_at DESC").fetchall()
-    return [model_row_to_dict(row) for row in rows]
+    runtime_config = load_runtime_config()
+    return [model_row_to_dict(row, runtime_config) for row in rows]
 
 
 def upsert_admin_model(conn, body):
