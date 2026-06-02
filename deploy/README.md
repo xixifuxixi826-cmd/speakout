@@ -54,6 +54,25 @@ python3 /srv/speakout/backend/server.py
 0.0.0.0:8765
 ```
 
+### Railway 数据持久化要求
+
+如果后端部署在 Railway，必须为 backend service 挂载持久卷。不要把 SQLite 数据库放在 `/tmp` 或容器临时目录里，否则每次部署或重启都可能清空用户、订单、Prompt 和运行配置。
+
+Railway 推荐配置：
+
+```bash
+npx @railway/cli volume add --service <backend-service> --mount-path /data --json
+npx @railway/cli variable set APP_DATA_DIR=/data --service <backend-service> --skip-deploys --json
+```
+
+配置完成后，后端数据库路径应为：
+
+```text
+/data/express_master.db
+```
+
+当前后端已经加了启动保护：在 Railway 环境中，如果没有 `APP_DATA_DIR`，并且没有可用的非 `/tmp` 持久卷路径，服务会拒绝启动。这样可以避免悄悄创建一套空库上线。
+
 ## 4. Nginx 代理
 
 参考：
@@ -106,6 +125,8 @@ sudo systemctl status speakout-backend
 2. 训练主链能走通
 3. 教练点评能返回
 4. 注册能成功
-5. 兑换码能开通会员
+5. 后台概览的注册用户、权益用户、付费用户口径正确
 6. 记录页能显示刚刚生成的内容
 7. 手机浏览器访问时没有明显排版错乱
+8. Railway 线上日志里数据库路径是 `/data/express_master.db`，不是 `/tmp/...`
+9. 重新部署后，后台 Prompt、模型配置、用户列表不会被重置

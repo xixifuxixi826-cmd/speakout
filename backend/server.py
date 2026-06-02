@@ -27,12 +27,32 @@ ADMIN_FRONTEND_DIR = ROOT.parent / "代码原型" / "开口-miniapp-prototype" /
 ADMIN_FRONTEND_FALLBACK_DIR = ROOT / "static_admin"
 ADMIN_ROUTE_PREFIX = "/admin-console"
 DEFAULT_DATA_DIR = ROOT / "data"
-if os.getenv("APP_DATA_DIR"):
-    DATA_DIR = Path(os.getenv("APP_DATA_DIR", "")).expanduser()
-elif os.getenv("RAILWAY_ENVIRONMENT"):
-    DATA_DIR = Path(os.getenv("RAILWAY_VOLUME_MOUNT_PATH", "/tmp/speakout-data")).expanduser()
-else:
-    DATA_DIR = DEFAULT_DATA_DIR
+def resolve_data_dir():
+    app_data_dir = (os.getenv("APP_DATA_DIR") or "").strip()
+    railway_volume_path = (os.getenv("RAILWAY_VOLUME_MOUNT_PATH") or "").strip()
+    is_railway = bool(os.getenv("RAILWAY_ENVIRONMENT"))
+
+    if app_data_dir:
+        return Path(app_data_dir).expanduser()
+
+    if is_railway:
+        if not railway_volume_path:
+            raise RuntimeError(
+                "Railway production requires a persistent volume. "
+                "Set APP_DATA_DIR to the mounted volume path, for example /data."
+            )
+        volume_path = Path(railway_volume_path).expanduser()
+        if str(volume_path).startswith("/tmp"):
+            raise RuntimeError(
+                "Refusing to use /tmp for Railway production data. "
+                "Attach a Railway volume and set APP_DATA_DIR to that mount path."
+            )
+        return volume_path
+
+    return DEFAULT_DATA_DIR
+
+
+DATA_DIR = resolve_data_dir()
 DB_PATH = DATA_DIR / "express_master.db"
 CONFIG_PATH = ROOT / "runtime_config.json"
 HOST = os.getenv("HOST", "0.0.0.0")
@@ -993,8 +1013,20 @@ def db():
     return conn
 
 
-def init_db():
+def ensure_data_dir_ready():
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+    if not DATA_DIR.is_dir():
+        raise RuntimeError(f"Data directory is not available: {DATA_DIR}")
+    probe_path = DATA_DIR / ".write-test"
+    try:
+        probe_path.write_text(now_text(), encoding="utf-8")
+        probe_path.unlink(missing_ok=True)
+    except OSError as error:
+        raise RuntimeError(f"Data directory is not writable: {DATA_DIR}") from error
+
+
+def init_db():
+    ensure_data_dir_ready()
     conn = db()
     cur = conn.cursor()
     cur.executescript(
@@ -6504,6 +6536,8 @@ def main():
     init_db()
     cleanup_dirty_sessions()
     server = ThreadingHTTPServer((HOST, PORT), AppHandler)
+    print(f"Data directory: {DATA_DIR}")
+    print(f"Database path: {DB_PATH}")
     print(f"Backend running on http://{HOST}:{PORT}")
     server.serve_forever()
 
