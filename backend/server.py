@@ -3100,6 +3100,13 @@ def continue_after_feedback(conn, user_id, auth_token=""):
     state = serialize_session(conn, active, user_id, auth_token)
     latest_feedback = state["feedback"] if state else None
     if latest_feedback and not latest_feedback.get("isFinal"):
+        access_status, payment_membership = training_access_status(conn, auth_token, user_id)
+        if access_status in ("inactive", "expired", "quota_exhausted", "unauthenticated"):
+            return {
+                "route": "/pages/account/plan",
+                "reason": access_status,
+                "remainingCredits": payment_membership["remaining_groups"] if payment_membership else 0,
+            }
         conn.execute(
             "UPDATE sessions SET status = 'active', updated_at = ? WHERE id = ?",
             (now_text(), active["id"]),
