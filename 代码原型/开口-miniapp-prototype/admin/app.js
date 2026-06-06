@@ -157,6 +157,10 @@ function renderOverview(overview) {
     .join("");
 }
 
+async function refreshOverview() {
+  renderOverview(await getJson("/admin-api/dashboard/overview"));
+}
+
 function renderUsers(users) {
   adminState.users = users || adminState.users || [];
   const keyword = (adminState.userSearch || "").replace(/\D/g, "");
@@ -790,11 +794,12 @@ function renderJobs(jobs) {
           <td>${item.sessionId}</td>
           <td>${item.promptKey} v${item.versionNo}</td>
           <td>${item.modelName}</td>
-          <td>${item.status}</td>
+          <td>${item.status}<br /><small>${item.durationMs == null ? "耗时 -" : `耗时 ${item.durationMs}ms`}</small></td>
           <td>
             <details class="record-detail">
               <summary>${escapeHtml(item.updatedAt)}</summary>
               <div class="record-detail__body">
+                ${item.errorMessage ? `<h4>失败原因</h4><pre>${escapeHtml(item.errorMessage)}</pre>` : ""}
                 <h4>用户输入</h4>
                 <pre>${escapeHtml(item.transcriptText || "暂无")}</pre>
                 <h4>模型请求</h4>

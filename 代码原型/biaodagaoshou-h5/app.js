@@ -303,75 +303,88 @@ function paymentCallbackParams() {
   return callbackParams;
 }
 
-function setPendingPayment(order) {
-  try {
-    window.sessionStorage.setItem(PAYMENT_PENDING_KEY, JSON.stringify({
-      outTradeNo: order?.outTradeNo || order?.orderNo || "",
-      createdAt: Date.now(),
-    }));
-  } catch (error) {
-    // ignore storage errors
+function readJsonStorage(key) {
+  for (const storage of [window.localStorage, window.sessionStorage]) {
+    try {
+      const value = JSON.parse(storage.getItem(key) || "null");
+      if (value) return value;
+    } catch (error) {
+      // Try the next storage area.
+    }
   }
+  return null;
+}
+
+function writeJsonStorage(key, value) {
+  for (const storage of [window.localStorage, window.sessionStorage]) {
+    try {
+      storage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      // ignore storage errors
+    }
+  }
+}
+
+function removeStorageKey(key) {
+  for (const storage of [window.localStorage, window.sessionStorage]) {
+    try {
+      storage.removeItem(key);
+    } catch (error) {
+      // ignore storage errors
+    }
+  }
+}
+
+function getTrainingRecovery() {
+  const recovery = readJsonStorage(TRAINING_RECOVERY_KEY);
+  if (!recovery || Date.now() - Number(recovery.createdAt || 0) >= 2 * 60 * 60 * 1000) {
+    if (recovery) clearTrainingRecovery();
+    return null;
+  }
+  return recovery;
+}
+
+function setPendingPayment(order, options = {}) {
+  writeJsonStorage(PAYMENT_PENDING_KEY, {
+    outTradeNo: order?.outTradeNo || order?.orderNo || "",
+    resumeTraining: Boolean(options.resumeTraining),
+    createdAt: Date.now(),
+  });
 }
 
 function clearPendingPayment() {
-  try {
-    window.sessionStorage.removeItem(PAYMENT_PENDING_KEY);
-  } catch (error) {
-    // ignore storage errors
-  }
+  removeStorageKey(PAYMENT_PENDING_KEY);
 }
 
-function setTrainingRecovery(reason = "payment_required") {
-  try {
-    window.sessionStorage.setItem(TRAINING_RECOVERY_KEY, JSON.stringify({
-      reason,
-      sessionId: state.training?.sessionId || state.training?.id || "",
-      draftText: state.training?.draftText || "",
-      createdAt: Date.now(),
-    }));
-  } catch (error) {
-    // ignore storage errors
-  }
+function setTrainingRecovery(reason = "payment_required", draftText = "") {
+  writeJsonStorage(TRAINING_RECOVERY_KEY, {
+    reason,
+    sessionId: state.training?.sessionId || state.training?.id || "",
+    draftText: draftText || state.training?.draftText || "",
+    createdAt: Date.now(),
+  });
 }
 
 function clearTrainingRecovery() {
-  try {
-    window.sessionStorage.removeItem(TRAINING_RECOVERY_KEY);
-  } catch (error) {
-    // ignore storage errors
-  }
+  removeStorageKey(TRAINING_RECOVERY_KEY);
 }
 
 function hasTrainingRecovery() {
-  try {
-    const recovery = JSON.parse(window.sessionStorage.getItem(TRAINING_RECOVERY_KEY) || "null");
-    return Boolean(recovery && Date.now() - Number(recovery.createdAt || 0) < 2 * 60 * 60 * 1000);
-  } catch (error) {
-    return false;
-  }
+  return Boolean(getTrainingRecovery());
 }
 
 function getPendingPayment() {
-  try {
-    const pending = JSON.parse(window.sessionStorage.getItem(PAYMENT_PENDING_KEY) || "null");
-    if (!pending) return null;
-    if (Date.now() - Number(pending.createdAt || 0) > 30 * 60 * 1000) {
-      clearPendingPayment();
-      return null;
-    }
-    return pending;
-  } catch (error) {
+  const pending = readJsonStorage(PAYMENT_PENDING_KEY);
+  if (!pending) return null;
+  if (Date.now() - Number(pending.createdAt || 0) > 30 * 60 * 1000) {
+    clearPendingPayment();
     return null;
   }
+  return pending;
 }
 
 function updatePendingPayment(pending) {
-  try {
-    window.sessionStorage.setItem(PAYMENT_PENDING_KEY, JSON.stringify(pending));
-  } catch (error) {
-    // ignore storage errors
-  }
+  writeJsonStorage(PAYMENT_PENDING_KEY, pending);
 }
 
 async function refreshPaymentStatus(showWaitingToast = true) {
@@ -396,9 +409,11 @@ async function refreshPaymentStatus(showWaitingToast = true) {
     if (result.paid) {
       clearPendingPayment();
       showToast("支付成功，权益已到账");
-      if (hasTrainingRecovery()) {
+      if (pending.resumeTraining && hasTrainingRecovery()) {
         state.tab = "train";
         await syncTrainStateFromBackend({ preferDraft: true });
+        clearTrainingRecovery();
+      } else {
         clearTrainingRecovery();
       }
       render();
@@ -462,6 +477,8 @@ async function maybeVerifyReturn() {
   if (!callbackParams) {
     return null;
   }
+  const pending = getPendingPayment();
+  const recovery = getTrainingRecovery();
   const result = await request("/api/account/verify-return", {
     method: "POST",
     body: JSON.stringify({ callbackParams }),
@@ -474,7 +491,14 @@ async function maybeVerifyReturn() {
   if (result?.auth?.authToken) {
     setAuthToken(result.auth.authToken);
   }
-  return result;
+  return {
+    account: result,
+    resumeTraining: Boolean(
+      (pending?.resumeTraining || !pending) &&
+      recovery?.reason === "submit_payment_required" &&
+      (recovery.draftText || "").trim()
+    ),
+  };
 }
 
 function normalizeDetails(details = []) {
@@ -968,7 +992,6 @@ function renderSpeaking() {
 
   const textarea = document.querySelector("#transcript-input");
   const shouldStartBlank =
-    (state.training?.attemptCount || 0) === 0 ||
     !state.training?.draftText ||
     state.training?.draftText === "__CLEAR__";
   textarea.value = shouldStartBlank ? "" : state.training.draftText || "";
@@ -1062,13 +1085,21 @@ function renderSpeaking() {
           // Keep the local draft even if the network hiccups before the plan page.
         }
         state.training.draftText = textarea.value;
-        setTrainingRecovery("submit_payment_required");
+        setTrainingRecovery("submit_payment_required", textarea.value);
         showToast("当前点评次数不足，正在跳转计划页...");
         state.tab = "profile";
         await refreshAccountState();
         state.screen = "plans";
         render();
         return;
+      }
+      try {
+        state.training = await request("/api/training/session/current/draft", {
+          method: "POST",
+          body: JSON.stringify({ draftText: textarea.value }),
+        });
+      } catch (draftError) {
+        state.training.draftText = textarea.value;
       }
       toastError(error, "这次教练点评生成失败，请稍后重试。");
       state.screen = "speaking";
@@ -1795,7 +1826,15 @@ function renderPlans() {
           method: "POST",
           body: JSON.stringify({ planId: button.dataset.planBuy }),
         });
-        setPendingPayment(order);
+        const recovery = getTrainingRecovery();
+        const resumeTraining = Boolean(
+          recovery &&
+          recovery.reason === "submit_payment_required" &&
+          recovery.sessionId &&
+          recovery.sessionId === (state.training?.sessionId || state.training?.id || "") &&
+          (recovery.draftText || state.training?.draftText || "").trim()
+        );
+        setPendingPayment(order, { resumeTraining });
         const form = document.createElement("form");
         form.method = order.paymentForm.method || "POST";
         form.action = order.paymentForm.action;
@@ -2051,28 +2090,15 @@ bottomLinks.forEach((button) => {
       } else if (!isAccountActive()) {
         state.screen = "landing";
       } else {
-        const trainScreens = new Set([
-          "landing",
-          "training",
-          "thinking",
-          "speaking",
-          "analyzing",
-          "feedback",
-          "feedbackEvaluation",
-          "coachDemo",
-        ]);
-        state.screen = state.training && trainScreens.has(state.screen) ? state.screen : "landing";
+        state.screen = "landing";
       }
       render();
       refreshAndRenderIf(
-        () => state.tab === "train",
+        () => state.tab === "train" && state.screen === "landing",
         async () => {
           await refreshAccountState();
           if (hasLoggedInAccount() && isAccountActive()) {
-            await syncTrainStateFromBackend();
-            if (hasTrainingRecovery() && state.screen === "speaking") {
-              clearTrainingRecovery();
-            }
+            await loadDashboardData();
           }
         },
         "训练状态刷新"
@@ -2085,7 +2111,7 @@ bottomLinks.forEach((button) => {
 
 async function bootstrap() {
   try {
-    await maybeVerifyReturn();
+    const paymentReturn = await maybeVerifyReturn();
     await refreshAccountState();
     if (!hasLoggedInAccount()) {
       state.tab = "train";
@@ -2099,7 +2125,7 @@ async function bootstrap() {
       render();
       return;
     }
-    if (hasTrainingRecovery()) {
+    if (paymentReturn?.resumeTraining && hasTrainingRecovery()) {
       state.tab = "train";
       await syncTrainStateFromBackend();
       if (state.screen === "speaking") {
@@ -2108,6 +2134,7 @@ async function bootstrap() {
         return;
       }
     }
+    clearTrainingRecovery();
     state.tab = "train";
     state.screen = "landing";
     render();

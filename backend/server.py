@@ -1183,6 +1183,8 @@ def init_db():
           transcript_text TEXT NOT NULL,
           request_json TEXT NOT NULL,
           response_json TEXT,
+          error_message TEXT NOT NULL DEFAULT '',
+          duration_ms INTEGER,
           created_at TEXT NOT NULL,
           updated_at TEXT NOT NULL
         );
@@ -1384,6 +1386,12 @@ def init_db():
     session_columns = {row["name"] for row in conn.execute("PRAGMA table_info(sessions)").fetchall()}
     if "attempt_count" not in session_columns:
         cur.execute("ALTER TABLE sessions ADD COLUMN attempt_count INTEGER NOT NULL DEFAULT 0")
+
+    ai_job_columns = {row["name"] for row in conn.execute("PRAGMA table_info(ai_jobs)").fetchall()}
+    if "error_message" not in ai_job_columns:
+        cur.execute("ALTER TABLE ai_jobs ADD COLUMN error_message TEXT NOT NULL DEFAULT ''")
+    if "duration_ms" not in ai_job_columns:
+        cur.execute("ALTER TABLE ai_jobs ADD COLUMN duration_ms INTEGER")
 
     payment_order_columns = {row["name"] for row in conn.execute("PRAGMA table_info(payment_demo_orders)").fetchall()}
     if "user_id" not in payment_order_columns:
@@ -2753,9 +2761,27 @@ def call_model_api(selected_cards, submission_text, prompt_row, attempt_no=1, pr
                 "raw_response": raw,
                 "feedback": parsed,
             }
-    except Exception:
+    except HTTPError as error:
+        raw_text = ""
+        try:
+            raw_text = error.read().decode("utf-8", errors="replace")
+        except Exception:
+            raw_text = ""
         traceback.print_exc()
-        return None
+        return {
+            "provider_code": provider_code,
+            "model_name": model_name,
+            "raw_response": {"status": error.code, "body": raw_text},
+            "error": f"HTTP {error.code}: {raw_text[:500] or error.reason}",
+        }
+    except Exception as error:
+        traceback.print_exc()
+        return {
+            "provider_code": provider_code,
+            "model_name": model_name,
+            "raw_response": {},
+            "error": str(error),
+        }
 
 
 def score_submission(conn, session_row, submission_text, attempt_no, previous_attempts):
@@ -2763,37 +2789,10 @@ def score_submission(conn, session_row, submission_text, attempt_no, previous_at
     selected_ids = set(json_loads(session_row["selected_json"], []))
     cards = session_cards(conn, session_row["id"])
     selected_cards = [card for card in cards if card["id"] in selected_ids]
+    if len(selected_cards) != 2:
+        raise ValueError("当前必须先选中两张卡片")
 
     previous_context = previous_attempts_prompt_context(previous_attempts)
-    model_result = call_model_api(
-        selected_cards,
-        submission_text,
-        prompt,
-        attempt_no=attempt_no,
-        previous_attempts_context=previous_context,
-    )
-    if model_result and model_result.get("feedback"):
-        feedback = model_result["feedback"]
-        if not isinstance(feedback, dict) or "totalScore" not in feedback:
-            model_result = None
-        elif not isinstance(feedback.get("details"), list) or len(feedback.get("details")) != 6:
-            model_result = None
-        elif any(not isinstance(item, dict) or item.get("score") is None for item in feedback.get("details")):
-            model_result = None
-
-    if model_result:
-        feedback = model_result["feedback"]
-        feedback["details"] = normalize_feedback_details(feedback.get("details", []))
-        feedback.setdefault("rewrite", "")
-        feedback = shape_feedback_payload(selected_cards, submission_text, attempt_no, previous_attempts, feedback)
-        provider_code = model_result["provider_code"]
-        feedback["aiSource"] = provider_code
-        model_name = model_result["model_name"]
-        response_payload = model_result["raw_response"]
-        status = "success"
-    else:
-        raise RuntimeError("真实 AI 调用失败或返回结构不完整：未使用本地评分兜底。请检查模型接口、API Key、prompt 输出格式或模型可用性。")
-
     job_id = f"JOB{int(time.time() * 1000)}"
     request_payload = {
         "selected_words": [card["word"] for card in selected_cards],
@@ -2803,28 +2802,107 @@ def score_submission(conn, session_row, submission_text, attempt_no, previous_at
         "prompt_key": prompt["prompt_key"],
         "prompt_version": prompt["version_no"],
     }
+    started_at = time.time()
     conn.execute(
         """
         INSERT INTO ai_jobs
-        (id, session_id, prompt_key, version_no, provider_code, model_name, status, selected_words_json, transcript_text, request_json, response_json, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, session_id, prompt_key, version_no, provider_code, model_name, status, selected_words_json, transcript_text, request_json, response_json, error_message, duration_ms, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, '', NULL, ?, ?)
         """,
         (
             job_id,
             session_row["id"],
             prompt["prompt_key"],
             prompt["version_no"],
-            provider_code,
-            model_name,
-            status,
+            prompt["provider_code"],
+            prompt["model_name"],
             json_dumps(request_payload["selected_words"]),
             submission_text,
             json_dumps(request_payload),
-            json_dumps(response_payload),
+            json_dumps({}),
             now_text(),
             now_text(),
         ),
     )
+    conn.commit()
+
+    model_result = call_model_api(
+        selected_cards,
+        submission_text,
+        prompt,
+        attempt_no=attempt_no,
+        previous_attempts_context=previous_context,
+    )
+    duration_ms = int((time.time() - started_at) * 1000)
+    error_message = ""
+    failed_model_result = model_result
+
+    if model_result and model_result.get("feedback"):
+        feedback = model_result["feedback"]
+        if not isinstance(feedback, dict) or "totalScore" not in feedback:
+            error_message = "模型返回缺少 totalScore"
+            failed_model_result = model_result
+            model_result = None
+        elif not isinstance(feedback.get("details"), list) or len(feedback.get("details")) != 6:
+            error_message = "模型返回 details 不是 6 个评分维度"
+            failed_model_result = model_result
+            model_result = None
+        elif any(not isinstance(item, dict) or item.get("score") is None for item in feedback.get("details")):
+            error_message = "模型返回 details 中存在缺少 score 的维度"
+            failed_model_result = model_result
+            model_result = None
+    elif model_result:
+        error_message = model_result.get("error") or "模型没有返回可解析 feedback"
+    else:
+        error_message = "真实 AI 调用失败或返回为空"
+
+    if not model_result:
+        response_payload = failed_model_result.get("raw_response") if isinstance(failed_model_result, dict) else {}
+        provider_code = failed_model_result.get("provider_code") if isinstance(failed_model_result, dict) else prompt["provider_code"]
+        model_name = failed_model_result.get("model_name") if isinstance(failed_model_result, dict) else prompt["model_name"]
+        conn.execute(
+            """
+            UPDATE ai_jobs
+            SET provider_code = ?, model_name = ?, status = 'failed', response_json = ?, error_message = ?, duration_ms = ?, updated_at = ?
+            WHERE id = ?
+            """,
+            (
+                provider_code,
+                model_name,
+                json_dumps(response_payload or {}),
+                error_message,
+                duration_ms,
+                now_text(),
+                job_id,
+            ),
+        )
+        conn.commit()
+        raise RuntimeError(f"真实 AI 调用失败或返回结构不完整：{error_message}")
+
+    feedback = model_result["feedback"]
+    feedback["details"] = normalize_feedback_details(feedback.get("details", []))
+    feedback.setdefault("rewrite", "")
+    feedback = shape_feedback_payload(selected_cards, submission_text, attempt_no, previous_attempts, feedback)
+    provider_code = model_result["provider_code"]
+    feedback["aiSource"] = provider_code
+    model_name = model_result["model_name"]
+    response_payload = model_result["raw_response"]
+    conn.execute(
+        """
+        UPDATE ai_jobs
+        SET provider_code = ?, model_name = ?, status = 'success', response_json = ?, error_message = '', duration_ms = ?, updated_at = ?
+        WHERE id = ?
+        """,
+        (
+            provider_code,
+            model_name,
+            json_dumps(response_payload),
+            duration_ms,
+            now_text(),
+            job_id,
+        ),
+    )
+    conn.commit()
     return feedback
 
 
@@ -3033,8 +3111,25 @@ def submit_training(conn, user_id, transcript_text, submitted_words=None, auth_t
         metadata={"attemptNo": attempt_no, "source": "submit_training"},
         event_key=f"coach_feedback_submitted:{session_row['id']}",
     )
+    conn.execute(
+        "UPDATE sessions SET draft_text = ?, status = 'active', updated_at = ? WHERE id = ?",
+        (transcript_text, now_text(), session_row["id"]),
+    )
     conn.commit()
-    feedback = score_submission(conn, session_row, transcript_text, attempt_no, previous_attempts)
+    try:
+        feedback = score_submission(conn, session_row, transcript_text, attempt_no, previous_attempts)
+    except Exception as error:
+        record_training_event(
+            conn,
+            "coach_feedback_failed",
+            user_id=user_id,
+            session_id=session_row["id"],
+            pair=event_pair,
+            metadata={"attemptNo": attempt_no, "source": "submit_training", "error": str(error)},
+            event_key=f"coach_feedback_failed:{session_row['id']}:{attempt_no}:{int(time.time() * 1000)}",
+        )
+        conn.commit()
+        raise
     record_training_event(
         conn,
         "coach_feedback_success",
@@ -3100,13 +3195,6 @@ def continue_after_feedback(conn, user_id, auth_token=""):
     state = serialize_session(conn, active, user_id, auth_token)
     latest_feedback = state["feedback"] if state else None
     if latest_feedback and not latest_feedback.get("isFinal"):
-        access_status, payment_membership = training_access_status(conn, auth_token, user_id)
-        if access_status in ("inactive", "expired", "quota_exhausted", "unauthenticated"):
-            return {
-                "route": "/pages/account/plan",
-                "reason": access_status,
-                "remainingCredits": payment_membership["remaining_groups"] if payment_membership else 0,
-            }
         conn.execute(
             "UPDATE sessions SET status = 'active', updated_at = ? WHERE id = ?",
             (now_text(), active["id"]),
@@ -5915,6 +6003,8 @@ def admin_jobs(conn):
             "transcriptText": row["transcript_text"],
             "requestJson": json_loads(row["request_json"], {}),
             "responseJson": json_loads(row["response_json"], {}),
+            "errorMessage": row["error_message"] if "error_message" in row.keys() else "",
+            "durationMs": row["duration_ms"] if "duration_ms" in row.keys() else None,
             "createdAt": row["created_at"][:16],
             "updatedAt": row["updated_at"][:16],
         }
